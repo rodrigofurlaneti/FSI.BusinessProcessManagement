@@ -1,6 +1,6 @@
 ﻿using FSI.BusinessProcessManagement.Domain.Interfaces;
 
-namespace FSI.BusinessProcessManagement.Domain.ValueObjects
+namespace FSI.BusinessProcessManagement.Domain.Services
 {
     public class AuditService
     {

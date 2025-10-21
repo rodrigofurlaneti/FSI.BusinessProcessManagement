@@ -1,8 +1,8 @@
 ﻿using FSI.BusinessProcessManagement.Domain.Enums;
-
+using FSI.BusinessProcessManagement.Domain.Exceptions;
 namespace FSI.BusinessProcessManagement.Domain.Entities
 {
-    public sealed class ProcessExecution : Entity
+    public sealed class ProcessExecution : BaseEntity
     {
         public long ExecutionId => Id;
         public long ProcessId { get; private set; }

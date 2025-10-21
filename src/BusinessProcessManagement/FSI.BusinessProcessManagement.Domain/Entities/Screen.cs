@@ -1,7 +1,9 @@
-﻿namespace FSI.BusinessProcessManagement.Domain.Entities
+﻿using FSI.BusinessProcessManagement.Domain.Exceptions;
+
+namespace FSI.BusinessProcessManagement.Domain.Entities
 {
     #region Screen
-    public sealed class Screen : Entity
+    public sealed class Screen : BaseEntity
     {
         public string Name { get; private set; }
         public string? Description { get; private set; }

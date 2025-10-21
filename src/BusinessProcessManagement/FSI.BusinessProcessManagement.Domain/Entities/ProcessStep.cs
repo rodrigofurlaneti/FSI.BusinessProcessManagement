@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using FSI.BusinessProcessManagement.Domain.Exceptions;
 
 namespace FSI.BusinessProcessManagement.Domain.Entities
 {
     #region ProcessStep
-    public sealed class ProcessStep : Entity
+    public sealed class ProcessStep : BaseEntity
     {
         public long StepId => Id;
         public long ProcessId { get; private set; }

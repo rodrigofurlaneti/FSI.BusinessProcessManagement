@@ -1,7 +1,8 @@
-﻿namespace FSI.BusinessProcessManagement.Domain.Entities
+﻿using FSI.BusinessProcessManagement.Domain.Exceptions;
+namespace FSI.BusinessProcessManagement.Domain.Entities
 {
     #region RoleScreenPermission
-    public sealed class RoleScreenPermission : Entity
+    public sealed class RoleScreenPermission : BaseEntity
     {
         public long RoleId { get; private set; }
         public long ScreenId { get; private set; }

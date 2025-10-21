@@ -1,58 +1,71 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using FSI.BusinessProcessManagement.Application.Interfaces;
 using FSI.BusinessProcessManagement.Domain.Interfaces;
 
 namespace FSI.BusinessProcessManagement.Application.Services
 {
-    public abstract class GenericAppService<TDto, TEntity> where TEntity : class
+    /// <summary>
+    /// Serviço genérico de aplicação para CRUD sob um repositório do domínio.
+    /// Subclasses devem mapear DTO &lt;-&gt; Entidade.
+    /// </summary>
+    public abstract class GenericAppService<TDto, TEntity> : IAppService<TDto>
+        where TEntity : class
     {
-        protected readonly IRepository<TEntity> _repository;
-        protected readonly IUnitOfWork _unitOfWork;
+        protected readonly IUnitOfWork Uow;
+        protected readonly IRepository<TEntity> Repository;
 
-        protected GenericAppService(IRepository<TEntity> repository, IUnitOfWork uow)
+        protected GenericAppService(IUnitOfWork uow, IRepository<TEntity> repository)
         {
-            _repository = repository;
-            _unitOfWork = uow;
+            Uow = uow;
+            Repository = repository;
         }
 
-        protected abstract TEntity MapToEntity(TDto dto);
         protected abstract TDto MapToDto(TEntity entity);
+        protected abstract TEntity MapToEntity(TDto dto);
 
         public virtual async Task<IEnumerable<TDto>> GetAllAsync()
         {
-            var list = await _repository.GetAllAsync();
-            var result = new List<TDto>();
-            foreach (var item in list)
-                result.Add(MapToDto(item));
-            return result;
+            var all = await Repository.GetAllAsync();
+            return all.Select(MapToDto).ToList();
         }
 
         public virtual async Task<TDto?> GetByIdAsync(long id)
         {
-            var entity = await _repository.GetByIdAsync(id);
-            return entity != null ? MapToDto(entity) : null;
+            var entity = await Repository.GetByIdAsync(id);
+            return entity is null ? default : MapToDto(entity);
         }
 
         public virtual async Task<long> InsertAsync(TDto dto)
         {
             var entity = MapToEntity(dto);
-            await _repository.InsertAsync(entity);
-            await _unitOfWork.SaveChangesAsync();
-            var idProp = entity.GetType().GetProperty("Id") ?? entity.GetType().GetProperty($"{typeof(TEntity).Name}Id");
-            return (long)(idProp?.GetValue(entity) ?? 0);
+            await Repository.InsertAsync(entity);
+            await Uow.CommitAsync();
+
+            // Tenta pegar a PK após insert:
+            var getIdProp = entity.GetType().GetProperty("Id");
+            if (getIdProp != null)
+            {
+                var idObj = getIdProp.GetValue(entity);
+                if (idObj is long idLong) return idLong;
+            }
+            return 0L;
         }
 
         public virtual async Task UpdateAsync(TDto dto)
         {
+            // Implementação padrão: mapeia DTO -> entidade “nova” e faz update direto
+            // (Subclasses podem sobrescrever para atualizar campos pontualmente)
             var entity = MapToEntity(dto);
-            await _repository.UpdateAsync(entity);
-            await _unitOfWork.SaveChangesAsync();
+            await Repository.UpdateAsync(entity);
+            await Uow.CommitAsync();
         }
 
         public virtual async Task DeleteAsync(long id)
         {
-            await _repository.DeleteAsync(id);
-            await _unitOfWork.SaveChangesAsync();
+            await Repository.DeleteAsync(id);
+            await Uow.CommitAsync();
         }
     }
 }

@@ -1,11 +1,14 @@
-﻿namespace FSI.BusinessProcessManagement.Domain.Interfaces
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace FSI.BusinessProcessManagement.Domain.Interfaces
 {
-    public interface IRepository<T> where T : class
+    public interface IRepository<TEntity> where TEntity : class
     {
-        Task<T?> GetByIdAsync(long id);
-        Task<IEnumerable<T>> GetAllAsync();
-        Task InsertAsync(T entity);
-        Task UpdateAsync(T entity);
+        Task<IEnumerable<TEntity>> GetAllAsync();
+        Task<TEntity?> GetByIdAsync(long id);
+        Task InsertAsync(TEntity entity);
+        Task UpdateAsync(TEntity entity);
         Task DeleteAsync(long id);
     }
 }

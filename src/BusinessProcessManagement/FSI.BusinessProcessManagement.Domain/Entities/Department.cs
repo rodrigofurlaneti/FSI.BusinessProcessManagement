@@ -1,9 +1,8 @@
-﻿namespace FSI.BusinessProcessManagement.Domain.Entities
+﻿using FSI.BusinessProcessManagement.Domain.Exceptions;
+namespace FSI.BusinessProcessManagement.Domain.Entities
 {
     #region Department
-
-
-    public sealed class Department : Entity
+    public sealed class Department : BaseEntity
     {
         public string Name { get; private set; }
         public string? Description { get; private set; }

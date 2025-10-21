@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using FSI.BusinessProcessManagement.Domain.Exceptions;
 
 namespace FSI.BusinessProcessManagement.Domain.Entities
 {
     #region User
 
 
-    public sealed class User : Entity
+    public sealed class User : BaseEntity
     {
         public long? DepartmentId { get; private set; }
         public string Username { get; private set; }
@@ -108,3 +104,4 @@ namespace FSI.BusinessProcessManagement.Domain.Entities
 
         #endregion
     }
+}

@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿using FSI.BusinessProcessManagement.Domain.Exceptions;
 namespace FSI.BusinessProcessManagement.Domain.Entities
 {
     #region AuditLog
-    public sealed class AuditLog : Entity
+    public sealed class AuditLog : BaseEntity
     {
         public long? UserId { get; private set; }
         public long? ScreenId { get; private set; }

@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using FSI.BusinessProcessManagement.Domain.Exceptions;
 
 namespace FSI.BusinessProcessManagement.Domain.Entities
 {
     #region UserRole
-
-
-    public sealed class UserRole : Entity
+    public sealed class UserRole : BaseEntity
     {
         public long UserId { get; private set; }
         public long RoleId { get; private set; }

@@ -1,7 +1,11 @@
-﻿namespace FSI.BusinessProcessManagement.Domain.Interfaces
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using FSI.BusinessProcessManagement.Domain.Entities;
+
+namespace FSI.BusinessProcessManagement.Domain.Interfaces
 {
-    public interface IProcessStepRepository : IRepository<Entities.ProcessStep>
+    public interface IProcessStepRepository : IRepository<ProcessStep>
     {
-        Task<IEnumerable<Entities.ProcessStep>> GetByProcessIdAsync(long processId);
+        Task<IEnumerable<ProcessStep>> GetByProcessIdAsync(long processId);
     }
 }

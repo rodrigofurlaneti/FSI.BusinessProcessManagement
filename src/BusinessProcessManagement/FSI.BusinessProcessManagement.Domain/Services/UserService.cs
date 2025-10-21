@@ -1,7 +1,8 @@
 ﻿using FSI.BusinessProcessManagement.Domain.Entities;
 using FSI.BusinessProcessManagement.Domain.Interfaces;
+using FSI.BusinessProcessManagement.Domain.ValueObjects;
 
-namespace FSI.BusinessProcessManagement.Domain.ValueObjects
+namespace FSI.BusinessProcessManagement.Domain.Services
 {
     public class UserService
     {
