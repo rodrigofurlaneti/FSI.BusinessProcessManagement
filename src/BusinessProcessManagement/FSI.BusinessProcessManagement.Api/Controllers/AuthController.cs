@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+
 using FSI.BusinessProcessManagement.Api.Models.Auth;
 using FSI.BusinessProcessManagement.Api.Services;
 using FSI.BusinessProcessManagement.Domain.Interfaces;
-using BCrypt.Net;
 
 namespace FSI.BusinessProcessManagement.Api.Controllers
 {
@@ -13,16 +14,16 @@ namespace FSI.BusinessProcessManagement.Api.Controllers
     {
         private readonly IUnitOfWork _uow;
         private readonly ITokenService _tokenService;
+        private readonly IConfiguration _config;
 
-        public AuthController(IUnitOfWork uow, ITokenService tokenService)
+        public AuthController(IUnitOfWork uow, ITokenService tokenService, IConfiguration config)
         {
             _uow = uow;
             _tokenService = tokenService;
+            _config = config;
         }
 
         [HttpPost("login")]
-        [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
@@ -32,13 +33,12 @@ namespace FSI.BusinessProcessManagement.Api.Controllers
             if (user == null || !user.IsActive)
                 return Unauthorized("Usuário inválido ou inativo.");
 
-            bool ok = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
-            if (!ok)
+            // Verifica senha (BCrypt)
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
                 return Unauthorized("Usuário ou senha inválidos.");
 
-            var userRoles = await _uow.UserRoles.GetAllAsync();
-
-            var roles = (await _uow.Users.GetRoleNamesAsync(user.Id)).ToList();
+            // Carrega roles do usuário (ideal: método dedicado no repo)
+            var roleNames = await _uow.Users.GetRoleNamesAsync(user.Id);
 
             var claims = new List<Claim>
             {
@@ -47,25 +47,20 @@ namespace FSI.BusinessProcessManagement.Api.Controllers
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Username)
             };
-
-            foreach (var role in roles)
+            foreach (var role in roleNames)
                 claims.Add(new Claim(ClaimTypes.Role, role));
 
-            var expiresAt = DateTime.UtcNow.AddMinutes(int.Parse(HttpContext.RequestServices
-                .GetRequiredService<IConfiguration>()["Jwt:ExpirationMinutes"]!));
+            var expiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_config["Jwt:ExpirationMinutes"]!));
+            var jwt = _tokenService.GenerateToken(claims, expiresAt);
 
-            var token = _tokenService.GenerateToken(claims, expiresAt);
-
-            var response = new LoginResponse
+            return Ok(new LoginResponse
             {
-                AccessToken = token,
+                AccessToken = jwt,
                 ExpiresAtUtc = expiresAt,
                 UserId = user.Id,
                 Username = user.Username,
-                Roles = roles
-            };
-
-            return Ok(response);
+                Roles = roleNames
+            });
         }
     }
 }
