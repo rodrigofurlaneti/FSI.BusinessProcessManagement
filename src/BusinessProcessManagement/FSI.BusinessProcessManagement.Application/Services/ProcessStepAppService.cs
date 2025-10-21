@@ -9,38 +9,38 @@ using FSI.BusinessProcessManagement.Domain.Interfaces;
 
 namespace FSI.BusinessProcessManagement.Application.Services
 {
-    public class DepartmentAppService : IDepartmentAppService
+    public class ProcessStepAppService : IProcessStepAppService
     {
-        private readonly IRepository<Department> _repo;
+        private readonly IRepository<ProcessStep> _repo;
         private readonly IUnitOfWork _uow;
 
-        public DepartmentAppService(IRepository<Department> repo, IUnitOfWork uow)
+        public ProcessStepAppService(IRepository<ProcessStep> repo, IUnitOfWork uow)
         {
             _repo = repo;
             _uow = uow;
         }
 
-        public async Task<IEnumerable<DepartmentDto>> GetAllAsync()
-            => (await _repo.GetAllAsync()).Select(DepartmentMapper.ToDto);
+        public async Task<IEnumerable<ProcessStepDto>> GetAllAsync()
+            => (await _repo.GetAllAsync()).Select(ProcessStepMapper.ToDto);
 
-        public async Task<DepartmentDto?> GetByIdAsync(long id)
+        public async Task<ProcessStepDto?> GetByIdAsync(long id)
         {
             var e = await _repo.GetByIdAsync(id);
-            return e is null ? null : DepartmentMapper.ToDto(e);
+            return e is null ? null : ProcessStepMapper.ToDto(e);
         }
 
-        public async Task<long> InsertAsync(DepartmentDto dto)
+        public async Task<long> InsertAsync(ProcessStepDto dto)
         {
-            var e = DepartmentMapper.ToNewEntity(dto);
+            var e = ProcessStepMapper.ToNewEntity(dto);
             await _repo.InsertAsync(e);
             await _uow.CommitAsync();
             return e.Id;
         }
 
-        public async Task UpdateAsync(DepartmentDto dto)
+        public async Task UpdateAsync(ProcessStepDto dto)
         {
-            var e = await _repo.GetByIdAsync(dto.DepartmentId) ?? throw new KeyNotFoundException("Department not found.");
-            DepartmentMapper.CopyToExisting(e, dto);
+            var e = await _repo.GetByIdAsync(dto.StepId) ?? throw new KeyNotFoundException("Step not found.");
+            ProcessStepMapper.CopyToExisting(e, dto);
             await _repo.UpdateAsync(e);
             await _uow.CommitAsync();
         }

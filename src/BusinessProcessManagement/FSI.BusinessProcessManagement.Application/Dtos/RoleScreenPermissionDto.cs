@@ -1,4 +1,6 @@
-﻿namespace FSI.BusinessProcessManagement.Application.Dtos
+﻿using System;
+
+namespace FSI.BusinessProcessManagement.Application.Dtos
 {
     public class RoleScreenPermissionDto
     {

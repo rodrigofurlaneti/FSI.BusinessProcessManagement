@@ -6,10 +6,6 @@ using FSI.BusinessProcessManagement.Domain.Interfaces;
 
 namespace FSI.BusinessProcessManagement.Application.Services
 {
-    /// <summary>
-    /// Serviço genérico de aplicação para CRUD sob um repositório do domínio.
-    /// Subclasses devem mapear DTO &lt;-&gt; Entidade.
-    /// </summary>
     public abstract class GenericAppService<TDto, TEntity> : IAppService<TDto>
         where TEntity : class
     {
@@ -23,7 +19,7 @@ namespace FSI.BusinessProcessManagement.Application.Services
         }
 
         protected abstract TDto MapToDto(TEntity entity);
-        protected abstract TEntity MapToEntity(TDto dto);
+        protected abstract TEntity MapToEntity(TDto dto); // usado apenas para INSERT padrão
 
         public virtual async Task<IEnumerable<TDto>> GetAllAsync()
         {
@@ -43,24 +39,11 @@ namespace FSI.BusinessProcessManagement.Application.Services
             await Repository.InsertAsync(entity);
             await Uow.CommitAsync();
 
-            // Tenta pegar a PK após insert:
-            var getIdProp = entity.GetType().GetProperty("Id");
-            if (getIdProp != null)
-            {
-                var idObj = getIdProp.GetValue(entity);
-                if (idObj is long idLong) return idLong;
-            }
-            return 0L;
+            var idProp = entity.GetType().GetProperty("Id");
+            return idProp?.GetValue(entity) is long id ? id : 0L;
         }
 
-        public virtual async Task UpdateAsync(TDto dto)
-        {
-            // Implementação padrão: mapeia DTO -> entidade “nova” e faz update direto
-            // (Subclasses podem sobrescrever para atualizar campos pontualmente)
-            var entity = MapToEntity(dto);
-            await Repository.UpdateAsync(entity);
-            await Uow.CommitAsync();
-        }
+        public abstract Task UpdateAsync(TDto dto);
 
         public virtual async Task DeleteAsync(long id)
         {

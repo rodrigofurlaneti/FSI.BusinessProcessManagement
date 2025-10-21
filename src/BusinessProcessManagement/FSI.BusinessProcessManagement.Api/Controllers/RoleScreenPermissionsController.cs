@@ -34,7 +34,7 @@ namespace FSI.BusinessProcessManagement.Api.Controllers
         [HttpPut("{id:long}")]
         public async Task<IActionResult> Update(long id, [FromBody] RoleScreenPermissionDto dto)
         {
-            dto.PermissionId = id;
+            dto.RoleScreenPermissionId = id;
             await _service.UpdateAsync(dto);
             return NoContent();
         }

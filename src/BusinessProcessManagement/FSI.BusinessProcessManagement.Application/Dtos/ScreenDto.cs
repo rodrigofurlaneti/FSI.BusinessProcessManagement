@@ -9,7 +9,7 @@ namespace FSI.BusinessProcessManagement.Application.Dtos
     public class ScreenDto
     {
         public long ScreenId { get; set; }
-        public string ScreenName { get; set; } = string.Empty;
+        public string? ScreenName { get; set; }
         public string? Description { get; set; }
     }
 }

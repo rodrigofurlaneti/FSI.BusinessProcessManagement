@@ -76,7 +76,7 @@ namespace FSI.BusinessProcessManagement.Domain.Services
             }
 
             var execution = new ProcessExecution(processId, step.Id, userId);
-            execution.Start(userId);
+            execution.Start(); // <-- Corrigido: NÃO passar userId aqui
 
             await _uow.ProcessExecutions.InsertAsync(execution);
             await _uow.CommitAsync();
@@ -126,7 +126,7 @@ namespace FSI.BusinessProcessManagement.Domain.Services
             }
 
             var nextExec = new ProcessExecution(current.ProcessId, next.Id, userId);
-            nextExec.Start(userId);
+            nextExec.Start(); // <-- Corrigido: NÃO passar userId aqui
 
             await _uow.ProcessExecutions.InsertAsync(nextExec);
             await _uow.CommitAsync();

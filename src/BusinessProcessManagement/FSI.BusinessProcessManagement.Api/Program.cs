@@ -3,7 +3,6 @@ using FSI.BusinessProcessManagement.Application.Interfaces;
 using FSI.BusinessProcessManagement.Application.Services;
 using FSI.BusinessProcessManagement.Api.Filters;
 using FSI.BusinessProcessManagement.Api.Services;
-
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -36,13 +35,10 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Controllers + filtro global
 builder.Services.AddControllers(o => o.Filters.Add<ApiExceptionFilter>());
 
-// Infra (DbContext + Repos + UoW)
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Application (AppServices) — garanta que TODOS existem nesses namespaces
 builder.Services.AddScoped<IDepartmentAppService, DepartmentAppService>();
 builder.Services.AddScoped<IUsuarioAppService, UsuarioAppService>();
 builder.Services.AddScoped<IRoleAppService, RoleAppService>();
@@ -78,7 +74,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// Token service
 builder.Services.AddSingleton<ITokenService, TokenService>();
 
 var app = builder.Build();

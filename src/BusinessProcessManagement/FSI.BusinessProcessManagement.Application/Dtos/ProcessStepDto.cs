@@ -10,7 +10,7 @@ namespace FSI.BusinessProcessManagement.Application.Dtos
     {
         public long StepId { get; set; }
         public long ProcessId { get; set; }
-        public string StepName { get; set; } = string.Empty;
+        public string? StepName { get; set; }
         public int StepOrder { get; set; }
         public long? AssignedRoleId { get; set; }
     }

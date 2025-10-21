@@ -1,89 +1,54 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using FSI.BusinessProcessManagement.Application.Dtos;
 using FSI.BusinessProcessManagement.Application.Interfaces;
+using FSI.BusinessProcessManagement.Application.Mappers;
 using FSI.BusinessProcessManagement.Domain.Entities;
 using FSI.BusinessProcessManagement.Domain.Interfaces;
 
 namespace FSI.BusinessProcessManagement.Application.Services
 {
-    public class UsuarioAppService : GenericAppService<UsuarioDto, User>, IUsuarioAppService
+    public class UsuarioAppService : IUsuarioAppService
     {
-        private readonly IRepository<Department> _deptRepo;
+        private readonly IRepository<User> _repo;
+        private readonly IUnitOfWork _uow;
 
-        public UsuarioAppService(
-            IUnitOfWork uow,
-            IRepository<User> repository,
-            IRepository<Department> deptRepo) : base(uow, repository)
+        public UsuarioAppService(IRepository<User> repo, IUnitOfWork uow)
         {
-            _deptRepo = deptRepo;
+            _repo = repo;
+            _uow = uow;
         }
 
-        // === Mapeamentos exigidos pela classe base (nomes corretos) ===
-        protected override UsuarioDto MapToDto(User entity)
+        public async Task<IEnumerable<UsuarioDto>> GetAllAsync()
+            => (await _repo.GetAllAsync()).Select(UsuarioMapper.ToDto);
+
+        public async Task<UsuarioDto?> GetByIdAsync(long id)
         {
-            return new UsuarioDto
-            {
-                UserId = entity.Id,
-                DepartmentId = entity.DepartmentId,
-                Username = entity.Username,
-                Email = entity.Email,
-                IsActive = entity.IsActive,
-                // Por segurança, nunca devolva PasswordHash no DTO em listagens/gets.
-            };
+            var e = await _repo.GetByIdAsync(id);
+            return e is null ? null : UsuarioMapper.ToDto(e);
         }
 
-        protected override User MapToEntity(UsuarioDto dto)
+        public async Task<long> InsertAsync(UsuarioDto dto)
         {
-            // Validação de FK (departamento) se informado
-            if (dto.DepartmentId.HasValue)
-            {
-                var depExists = _deptRepo.GetByIdAsync(dto.DepartmentId.Value)
-                                         .GetAwaiter().GetResult();
-                if (depExists == null)
-                    throw new KeyNotFoundException("Department not found.");
-            }
-
-            // Regra: no Insert exigimos PasswordHash; no Update sobrescrevemos abaixo
-            var passwordHash = dto.PasswordHash ?? string.Empty;
-            if (dto.UserId == 0 && string.IsNullOrWhiteSpace(passwordHash))
-                throw new System.ArgumentException("PasswordHash required for new user.");
-
-            var user = new User(
-                username: dto.Username ?? string.Empty,
-                passwordHash: passwordHash,
-                departmentId: dto.DepartmentId,
-                email: dto.Email,
-                isActive: dto.IsActive
-            );
-
-            // Se vier com Id (update via impl. padrão), mantemos
-            if (dto.UserId > 0)
-            {
-                // seta via reflexão se sua entidade não expõe setter público
-                var idProp = typeof(User).GetProperty("Id");
-                idProp?.SetValue(user, dto.UserId);
-            }
-
-            return user;
+            var e = UsuarioMapper.ToNewEntity(dto);
+            await _repo.InsertAsync(e);
+            await _uow.CommitAsync();
+            return e.Id;
         }
 
-        // === Update com regras de negócio específicas ===
-        public override async Task UpdateAsync(UsuarioDto dto)
+        public async Task UpdateAsync(UsuarioDto dto)
         {
-            var existing = await Repository.GetByIdAsync(dto.UserId)
-                           ?? throw new KeyNotFoundException("User not found.");
+            var e = await _repo.GetByIdAsync(dto.UserId) ?? throw new KeyNotFoundException("User not found.");
+            UsuarioMapper.CopyToExisting(e, dto);
+            await _repo.UpdateAsync(e);
+            await _uow.CommitAsync();
+        }
 
-            existing.SetUsername(dto.Username);
-            if (!string.IsNullOrWhiteSpace(dto.PasswordHash))
-                existing.SetPasswordHash(dto.PasswordHash);
-
-            existing.SetEmail(dto.Email);
-            existing.SetDepartment(dto.DepartmentId);
-            if (dto.IsActive) existing.Activate(); else existing.Deactivate();
-
-            await Repository.UpdateAsync(existing);
-            await Uow.CommitAsync();
+        public async Task DeleteAsync(long id)
+        {
+            await _repo.DeleteAsync(id);
+            await _uow.CommitAsync();
         }
     }
 }

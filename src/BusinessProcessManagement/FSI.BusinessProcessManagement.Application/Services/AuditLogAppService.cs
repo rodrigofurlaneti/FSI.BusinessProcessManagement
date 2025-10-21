@@ -9,38 +9,38 @@ using FSI.BusinessProcessManagement.Domain.Interfaces;
 
 namespace FSI.BusinessProcessManagement.Application.Services
 {
-    public class DepartmentAppService : IDepartmentAppService
+    public class AuditLogAppService : IAuditLogAppService
     {
-        private readonly IRepository<Department> _repo;
+        private readonly IRepository<AuditLog> _repo;
         private readonly IUnitOfWork _uow;
 
-        public DepartmentAppService(IRepository<Department> repo, IUnitOfWork uow)
+        public AuditLogAppService(IRepository<AuditLog> repo, IUnitOfWork uow)
         {
             _repo = repo;
             _uow = uow;
         }
 
-        public async Task<IEnumerable<DepartmentDto>> GetAllAsync()
-            => (await _repo.GetAllAsync()).Select(DepartmentMapper.ToDto);
+        public async Task<IEnumerable<AuditLogDto>> GetAllAsync()
+            => (await _repo.GetAllAsync()).Select(AuditLogMapper.ToDto);
 
-        public async Task<DepartmentDto?> GetByIdAsync(long id)
+        public async Task<AuditLogDto?> GetByIdAsync(long id)
         {
             var e = await _repo.GetByIdAsync(id);
-            return e is null ? null : DepartmentMapper.ToDto(e);
+            return e is null ? null : AuditLogMapper.ToDto(e);
         }
 
-        public async Task<long> InsertAsync(DepartmentDto dto)
+        public async Task<long> InsertAsync(AuditLogDto dto)
         {
-            var e = DepartmentMapper.ToNewEntity(dto);
+            var e = AuditLogMapper.ToNewEntity(dto);
             await _repo.InsertAsync(e);
             await _uow.CommitAsync();
             return e.Id;
         }
 
-        public async Task UpdateAsync(DepartmentDto dto)
+        public async Task UpdateAsync(AuditLogDto dto)
         {
-            var e = await _repo.GetByIdAsync(dto.DepartmentId) ?? throw new KeyNotFoundException("Department not found.");
-            DepartmentMapper.CopyToExisting(e, dto);
+            var e = await _repo.GetByIdAsync(dto.AuditId) ?? throw new KeyNotFoundException("AuditLog not found.");
+            AuditLogMapper.CopyToExisting(e, dto);
             await _repo.UpdateAsync(e);
             await _uow.CommitAsync();
         }

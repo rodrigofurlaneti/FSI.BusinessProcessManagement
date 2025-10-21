@@ -9,38 +9,38 @@ using FSI.BusinessProcessManagement.Domain.Interfaces;
 
 namespace FSI.BusinessProcessManagement.Application.Services
 {
-    public class DepartmentAppService : IDepartmentAppService
+    public class ScreenAppService : IScreenAppService
     {
-        private readonly IRepository<Department> _repo;
+        private readonly IRepository<Screen> _repo;
         private readonly IUnitOfWork _uow;
 
-        public DepartmentAppService(IRepository<Department> repo, IUnitOfWork uow)
+        public ScreenAppService(IRepository<Screen> repo, IUnitOfWork uow)
         {
             _repo = repo;
             _uow = uow;
         }
 
-        public async Task<IEnumerable<DepartmentDto>> GetAllAsync()
-            => (await _repo.GetAllAsync()).Select(DepartmentMapper.ToDto);
+        public async Task<IEnumerable<ScreenDto>> GetAllAsync()
+            => (await _repo.GetAllAsync()).Select(ScreenMapper.ToDto);
 
-        public async Task<DepartmentDto?> GetByIdAsync(long id)
+        public async Task<ScreenDto?> GetByIdAsync(long id)
         {
             var e = await _repo.GetByIdAsync(id);
-            return e is null ? null : DepartmentMapper.ToDto(e);
+            return e is null ? null : ScreenMapper.ToDto(e);
         }
 
-        public async Task<long> InsertAsync(DepartmentDto dto)
+        public async Task<long> InsertAsync(ScreenDto dto)
         {
-            var e = DepartmentMapper.ToNewEntity(dto);
+            var e = ScreenMapper.ToNewEntity(dto);
             await _repo.InsertAsync(e);
             await _uow.CommitAsync();
             return e.Id;
         }
 
-        public async Task UpdateAsync(DepartmentDto dto)
+        public async Task UpdateAsync(ScreenDto dto)
         {
-            var e = await _repo.GetByIdAsync(dto.DepartmentId) ?? throw new KeyNotFoundException("Department not found.");
-            DepartmentMapper.CopyToExisting(e, dto);
+            var e = await _repo.GetByIdAsync(dto.ScreenId) ?? throw new KeyNotFoundException("Screen not found.");
+            ScreenMapper.CopyToExisting(e, dto);
             await _repo.UpdateAsync(e);
             await _uow.CommitAsync();
         }
