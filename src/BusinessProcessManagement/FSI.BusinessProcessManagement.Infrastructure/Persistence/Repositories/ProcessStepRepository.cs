@@ -12,6 +12,9 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Repositories
         public ProcessStepRepository(BpmDbContext ctx) : base(ctx) { }
 
         public async Task<IEnumerable<ProcessStep>> GetByProcessIdAsync(long processId)
-            => await _dbSetTEntity.AsNoTracking().Where(s => s.ProcessId == processId).OrderBy(s => s.StepOrder).ToListAsync();
+            => await _dbSet.AsNoTracking()
+                           .Where(s => s.ProcessId == processId)
+                           .OrderBy(s => s.StepOrder)
+                           .ToListAsync();
     }
 }

@@ -11,6 +11,6 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Repositories
         public RoleScreenPermissionRepository(BpmDbContext ctx) : base(ctx) { }
 
         public async Task<RoleScreenPermission?> GetByRoleAndScreenAsync(long roleId, long screenId)
-            => await _dbSetTEntity.AsNoTracking().FirstOrDefaultAsync(r => r.RoleId == roleId && r.ScreenId == screenId);
+            => await _dbSet.AsNoTracking().FirstOrDefaultAsync(r => r.RoleId == roleId && r.ScreenId == screenId);
     }
 }

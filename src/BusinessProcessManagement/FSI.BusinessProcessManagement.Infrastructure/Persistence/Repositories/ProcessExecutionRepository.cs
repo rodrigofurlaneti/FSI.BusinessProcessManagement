@@ -12,6 +12,8 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Repositories
         public ProcessExecutionRepository(BpmDbContext ctx) : base(ctx) { }
 
         public async Task<IEnumerable<ProcessExecution>> GetByProcessAsync(long processId)
-            => await _dbSetTEntity.AsNoTracking().Where(e => e.ProcessId == processId).ToListAsync();
+            => await _dbSet.AsNoTracking()
+                           .Where(e => e.ProcessId == processId)
+                           .ToListAsync();
     }
 }

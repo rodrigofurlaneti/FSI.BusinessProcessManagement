@@ -1,17 +1,17 @@
-using FSI.BusinessProcessManagement.Infrastructure;
+using FSI.BusinessProcessManagement.Api.Filters;
+using FSI.BusinessProcessManagement.Api.Seed;
+using FSI.BusinessProcessManagement.Api.Services;
 using FSI.BusinessProcessManagement.Application.Interfaces;
 using FSI.BusinessProcessManagement.Application.Services;
-using FSI.BusinessProcessManagement.Api.Filters;
-using FSI.BusinessProcessManagement.Api.Services;
+using FSI.BusinessProcessManagement.Infrastructure;
+using FSI.BusinessProcessManagement.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Swagger + JWT auth schema
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -27,8 +27,9 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
-            new OpenApiSecurityScheme{
-                Reference = new OpenApiReference{ Type = ReferenceType.SecurityScheme, Id = "Bearer"}
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
             },
             Array.Empty<string>()
         }
@@ -37,7 +38,8 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddControllers(o => o.Filters.Add<ApiExceptionFilter>());
 
-builder.Services.AddInfrastructure(builder.Configuration);
+FSI.BusinessProcessManagement.Infrastructure.DependencyInjection
+    .AddInfrastructure(builder.Services, builder.Configuration);
 
 builder.Services.AddScoped<IDepartmentAppService, DepartmentAppService>();
 builder.Services.AddScoped<IUsuarioAppService, UsuarioAppService>();
@@ -50,7 +52,6 @@ builder.Services.AddScoped<IProcessStepAppService, ProcessStepAppService>();
 builder.Services.AddScoped<IProcessExecutionAppService, ProcessExecutionAppService>();
 builder.Services.AddScoped<IRoleScreenPermissionAppService, RoleScreenPermissionAppService>();
 
-// JWT Auth
 var jwt = builder.Configuration.GetSection("Jwt");
 var keyBytes = Encoding.UTF8.GetBytes(jwt["Key"]!);
 
@@ -78,15 +79,18 @@ builder.Services.AddSingleton<ITokenService, TokenService>();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    var db = scope.ServiceProvider.GetRequiredService<BpmDbContext>();
+    await DbSeeder.SeedAdminAsync(db);
 }
 
+app.UseSwagger();
+app.UseSwaggerUI();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
 app.Run();

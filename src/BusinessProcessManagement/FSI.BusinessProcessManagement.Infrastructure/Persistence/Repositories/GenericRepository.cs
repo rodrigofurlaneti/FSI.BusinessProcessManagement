@@ -2,39 +2,41 @@
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using FSI.BusinessProcessManagement.Domain.Interfaces;
+using FSI.BusinessProcessManagement.Infrastructure.Persistence;
 
 namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Repositories
 {
     public class GenericRepository<TEntity> : IRepository<TEntity> where TEntity : class
     {
-        protected readonly DbContext _dbContext;
-        protected readonly DbSet<TEntity> _dbSetTEntity;
+        protected readonly BpmDbContext _ctx;
+        protected readonly DbSet<TEntity> _dbSet;
 
-        public GenericRepository(DbContext ctx)
+        public GenericRepository(BpmDbContext ctx)
         {
-            _dbContext = ctx;
-            _dbSetTEntity = _dbContext.Set<TEntity>();
+            _ctx = ctx;
+            _dbSet = _ctx.Set<TEntity>();
         }
 
         public virtual async Task<IEnumerable<TEntity>> GetAllAsync()
-            => await _dbSetTEntity.AsNoTracking().ToListAsync();
+            => await _dbSet.AsNoTracking().ToListAsync();
 
         public virtual async Task<TEntity?> GetByIdAsync(long id)
-            => await _dbSetTEntity.FindAsync(id);
+            => await _dbSet.FindAsync(id);
 
         public virtual async Task InsertAsync(TEntity entity)
-            => await _dbSetTEntity.AddAsync(entity);
+            => await _dbSet.AddAsync(entity);
 
         public virtual Task UpdateAsync(TEntity entity)
         {
-            _dbSetTEntity.Update(entity);
+            _dbSet.Update(entity);
             return Task.CompletedTask;
         }
 
         public virtual async Task DeleteAsync(long id)
         {
-            var entity = await GetByIdAsync(id);
-            if (entity != null) _dbSetTEntity.Remove(entity);
+            var entity = await _dbSet.FindAsync(id);
+            if (entity != null)
+                _dbSet.Remove(entity);
         }
     }
 }

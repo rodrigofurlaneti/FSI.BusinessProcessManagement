@@ -8,17 +8,18 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Configuration
     {
         public void Configure(EntityTypeBuilder<User> b)
         {
-            b.ToTable("Usuario");
+            b.ToTable("User");
             b.HasKey(x => x.Id);
             b.Property(x => x.Id).HasColumnName("UserId");
+
+            b.Property(x => x.DepartmentId).HasColumnName("DepartmentId");
+            b.Property(x => x.Username).HasColumnName("Username").HasMaxLength(100).IsRequired();
+            b.Property(x => x.PasswordHash).HasColumnName("PasswordHash").HasMaxLength(255).IsRequired();
+            b.Property(x => x.Email).HasColumnName("Email").HasMaxLength(200);
+            b.Property(x => x.IsActive).HasColumnName("IsActive").HasColumnType("tinyint(1)").IsRequired();
+
             b.Property(x => x.CreatedAt).HasColumnType("datetime(6)");
             b.Property(x => x.UpdatedAt).HasColumnType("datetime(6)");
-            b.Property(x => x.DepartmentId).HasColumnName("DepartmentId");
-
-            b.Property(x => x.Username).IsRequired().HasMaxLength(100).HasColumnName("Username");
-            b.Property(x => x.PasswordHash).IsRequired().HasMaxLength(255).HasColumnName("PasswordHash");
-            b.Property(x => x.Email).HasMaxLength(200).HasColumnName("Email");
-            b.Property(x => x.IsActive).HasColumnName("IsActive");
 
             b.HasIndex(x => x.Username).IsUnique().HasDatabaseName("UQ_Usuario_Username");
             b.HasIndex(x => x.Email).IsUnique().HasDatabaseName("UQ_Usuario_Email");

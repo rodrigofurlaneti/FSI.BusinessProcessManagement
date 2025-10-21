@@ -1,13 +1,13 @@
-﻿using System.Threading.Tasks;
-using FSI.BusinessProcessManagement.Domain.Interfaces;
+﻿using System;
+using System.Threading.Tasks;
 using FSI.BusinessProcessManagement.Domain.Entities;
-using FSI.BusinessProcessManagement.Infrastructure.Persistence.Repositories;
+using FSI.BusinessProcessManagement.Domain.Interfaces;
 
 namespace FSI.BusinessProcessManagement.Infrastructure.Persistence
 {
-    public class UnitOfWork : IUnitOfWork
+    public class UnitOfWork : IUnitOfWork, IDisposable
     {
-        private readonly BpmDbContext __dbContext;
+        private readonly BpmDbContext _db;
 
         public IDepartmentRepository Departments { get; }
         public IUserRepository Users { get; }
@@ -21,7 +21,7 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence
         public IProcessExecutionRepository ProcessExecutions { get; }
 
         public UnitOfWork(
-            BpmDbContext ctx,
+            BpmDbContext db,
             IDepartmentRepository departments,
             IUserRepository users,
             IRoleRepository roles,
@@ -33,7 +33,7 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence
             IProcessStepRepository processSteps,
             IProcessExecutionRepository processExecutions)
         {
-            __dbContext = ctx;
+            _db = db;
             Departments = departments;
             Users = users;
             Roles = roles;
@@ -46,11 +46,8 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence
             ProcessExecutions = processExecutions;
         }
 
-        public Task<int> CommitAsync() => __dbContext.SaveChangesAsync();
+        public Task<int> CommitAsync() => _db.SaveChangesAsync();
 
-        // Caso sua interface tenha SaveChangesAsync com outro nome:
-        // public Task<int> SaveChangesAsync() => __dbContext.SaveChangesAsync();
-
-        public void Dispose() => __dbContext.Dispose();
+        public void Dispose() => _db.Dispose();
     }
 }

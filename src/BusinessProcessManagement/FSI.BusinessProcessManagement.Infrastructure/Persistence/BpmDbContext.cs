@@ -1,13 +1,12 @@
-﻿using FSI.BusinessProcessManagement.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Reflection.Emit;
+﻿using Microsoft.EntityFrameworkCore;
+using FSI.BusinessProcessManagement.Domain.Entities;
 
 namespace FSI.BusinessProcessManagement.Infrastructure.Persistence
 {
     public class BpmDbContext : DbContext
     {
         public BpmDbContext(DbContextOptions<BpmDbContext> options) : base(options) { }
+
         public DbSet<Department> Departments => Set<Department>();
         public DbSet<User> Users => Set<User>();
         public DbSet<Role> Roles => Set<Role>();
@@ -18,6 +17,7 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence
         public DbSet<ProcessStep> ProcessSteps => Set<ProcessStep>();
         public DbSet<ProcessExecution> ProcessExecutions => Set<ProcessExecution>();
         public DbSet<RoleScreenPermission> RoleScreenPermissions => Set<RoleScreenPermission>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(BpmDbContext).Assembly);

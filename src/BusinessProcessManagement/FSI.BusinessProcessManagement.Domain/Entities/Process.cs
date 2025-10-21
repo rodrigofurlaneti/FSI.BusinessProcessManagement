@@ -1,33 +1,38 @@
-﻿using FSI.BusinessProcessManagement.Domain.Exceptions;
+﻿using System.Collections.Generic;
+using System.Linq;
+using FSI.BusinessProcessManagement.Domain.Exceptions;
+
 namespace FSI.BusinessProcessManagement.Domain.Entities
 {
-    public class Process : BaseEntity
+    public sealed class Process : BaseEntity
     {
-        private readonly List<ProcessStep> _steps = new();
-        private readonly List<ProcessExecution> _executions = new();
-
-        public string Name { get; private set; }
-        public string? Description { get; private set; }
+        public string Name { get; private set; } = string.Empty;
         public long? DepartmentId { get; private set; }
-        public long? CreatedById { get; private set; }
+        public string? Description { get; private set; }
+        public long? CreatedBy { get; private set; }
 
-        public IReadOnlyCollection<ProcessStep> Steps => _steps.AsReadOnly();
-        public IReadOnlyCollection<ProcessExecution> Executions => _executions.AsReadOnly();
+        private readonly List<ProcessStep> _steps = new();
+        public IReadOnlyCollection<ProcessStep> Steps => _steps;
+
+        // Requisito do EF
+        private Process() { }
 
         public Process(string name, long? departmentId = null, string? description = null, long? createdBy = null)
         {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new DomainException("Process name is required.");
-
-            Name = name.Trim();
+            SetName(name);
             DepartmentId = departmentId;
-            Description = description?.Trim();
-            CreatedById = createdBy;
+            Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+            CreatedBy = createdBy;
         }
 
-        public void SetDescription(string? description)
+        public void SetName(string name)
         {
-            Description = description?.Trim();
+            if (string.IsNullOrWhiteSpace(name))
+                throw new DomainException("Process name is required.");
+            if (name.Length > 200)
+                throw new DomainException("Process name too long (max 200).");
+
+            Name = name.Trim();
             Touch();
         }
 
@@ -37,13 +42,24 @@ namespace FSI.BusinessProcessManagement.Domain.Entities
             Touch();
         }
 
+        public void SetDescription(string? description)
+        {
+            Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+            Touch();
+        }
+
+        public void SetCreatedBy(long? createdBy)
+        {
+            CreatedBy = createdBy;
+            Touch();
+        }
+
         public ProcessStep AddStep(string stepName, int stepOrder, long? assignedRoleId = null)
         {
             if (string.IsNullOrWhiteSpace(stepName))
-                throw new DomainException("Step name is required.");
-
+                throw new DomainException("StepName is required.");
             if (_steps.Any(s => s.StepOrder == stepOrder))
-                throw new DomainException($"A step with order {stepOrder} already exists for this process.");
+                throw new DomainException($"A step with order {stepOrder} already exists.");
 
             var step = new ProcessStep(this.Id, stepName.Trim(), stepOrder, assignedRoleId);
             _steps.Add(step);
@@ -53,22 +69,21 @@ namespace FSI.BusinessProcessManagement.Domain.Entities
 
         public void RemoveStep(long stepId)
         {
-            var step = _steps.FirstOrDefault(s => s.Id == stepId || s.StepId == stepId);
-            if (step == null)
-                throw new DomainException("Step not found in process.");
-
-            _steps.Remove(step);
+            var s = _steps.FirstOrDefault(x => x.Id == stepId || x.StepId == stepId);
+            if (s == null) throw new DomainException("Step not found.");
+            _steps.Remove(s);
             Touch();
         }
 
+        /// <summary>
+        /// Inicia uma execução deste processo na etapa informada.
+        /// (Regra de domínio: criação da execução parte do agregado Process)
+        /// </summary>
         public ProcessExecution StartExecution(long stepId, long? userId = null)
         {
-            var step = _steps.FirstOrDefault(s => s.Id == stepId || s.StepId == stepId);
-            if (step == null)
-                throw new DomainException("Step not found in process.");
-
-            var exec = new ProcessExecution(this.Id, step.StepId, userId);
-            _executions.Add(exec);
+            if (stepId <= 0) throw new DomainException("StepId is invalid.");
+            // (Opcional) você pode validar se o step pertence ao processo se a coleção Steps estiver carregada
+            var exec = new ProcessExecution(this.Id, stepId, userId);
             Touch();
             return exec;
         }

@@ -22,7 +22,7 @@ namespace FSI.BusinessProcessManagement.Application.Mappers
             DepartmentId = entity.DepartmentId,
             ProcessName = entity.Name,
             Description = entity.Description,
-            CreatedBy = entity.CreatedById
+            CreatedBy = entity.CreatedBy
         };
     }
 }

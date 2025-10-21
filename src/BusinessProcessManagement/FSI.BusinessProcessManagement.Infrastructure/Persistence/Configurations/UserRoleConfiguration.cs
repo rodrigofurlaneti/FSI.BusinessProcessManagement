@@ -11,24 +11,18 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Configuration
             b.ToTable("UserRole");
             b.HasKey(x => x.Id);
             b.Property(x => x.Id).HasColumnName("UserRoleId");
-            b.Property(x => x.AssignedAt).HasColumnType("datetime(6)");
 
-            b.Property(x => x.UserId).HasColumnName("UserId");
-            b.Property(x => x.RoleId).HasColumnName("RoleId");
+            b.Property(x => x.UserId).HasColumnName("UserId").IsRequired();
+            b.Property(x => x.RoleId).HasColumnName("RoleId").IsRequired();
+            b.Property(x => x.AssignedAt).HasColumnName("AssignedAt").HasColumnType("datetime(6)");
 
-            b.HasIndex(x => new { x.UserId, x.RoleId })
-                .IsUnique()
-                .HasDatabaseName("UQ_UserRole_User_Role");
+            b.HasIndex(x => new { x.UserId, x.RoleId }).IsUnique().HasDatabaseName("UQ_UserRole_User_Role");
 
-            b.HasOne<User>()
-                .WithMany()
-                .HasForeignKey(x => x.UserId)
+            b.HasOne<User>().WithMany().HasForeignKey(x => x.UserId)
                 .HasConstraintName("FK_UserRole_User")
                 .OnDelete(DeleteBehavior.Cascade);
 
-            b.HasOne<Role>()
-                .WithMany()
-                .HasForeignKey(x => x.RoleId)
+            b.HasOne<Role>().WithMany().HasForeignKey(x => x.RoleId)
                 .HasConstraintName("FK_UserRole_Role")
                 .OnDelete(DeleteBehavior.Cascade);
         }

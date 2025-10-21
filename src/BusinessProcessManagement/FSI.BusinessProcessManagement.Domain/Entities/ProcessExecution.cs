@@ -15,113 +15,82 @@ namespace FSI.BusinessProcessManagement.Domain.Entities
         public DateTime? CompletedAt { get; private set; }
         public string? Remarks { get; private set; }
 
+        // Requisito do EF
         private ProcessExecution() { }
 
-        public ProcessExecution(long processId, long stepId, long? userId)
+        public ProcessExecution(long processId, long stepId, long? userId = null)
         {
-            if (processId <= 0) throw new DomainException("Invalid ProcessId.");
-            if (stepId <= 0) throw new DomainException("Invalid StepId.");
+            if (processId <= 0) throw new DomainException("ProcessId is invalid.");
+            if (stepId <= 0) throw new DomainException("StepId is invalid.");
 
             ProcessId = processId;
             StepId = stepId;
             UserId = userId;
-            Status = ExecutionStatus.Pendente;
-            Touch();
-        }
 
-        // ===== Comportamentos (transições) =====
-
-        public void Start()
-        {
-            Start(DateTime.UtcNow);
-        }
-
-        public void Start(DateTime? startedAt)
-        {
-            if (Status == ExecutionStatus.Concluido)
-                throw new DomainException("Cannot start an already completed execution.");
-            if (Status == ExecutionStatus.Cancelado)
-                throw new DomainException("Cannot start a canceled execution.");
-
+            // Ao criar já consideramos 'Iniciado' (ou troque para Pendente, se preferir)
             Status = ExecutionStatus.Iniciado;
-            StartedAt ??= startedAt ?? DateTime.UtcNow;
+            StartedAt = DateTime.UtcNow;
+        }
+
+        // --- Métodos para dar suporte aos mappers/app services ---
+
+        public void SetStep(long stepId)
+        {
+            if (stepId <= 0) throw new DomainException("StepId is invalid.");
+            StepId = stepId;
             Touch();
         }
 
-        public void Complete()
+        public void SetUser(long? userId)
         {
-            Complete(DateTime.UtcNow, null);
-        }
-
-        public void Complete(string? remarks)
-        {
-            Complete(DateTime.UtcNow, remarks);
-        }
-
-        public void Complete(DateTime? completedAt, string? remarks = null)
-        {
-            if (Status == ExecutionStatus.Cancelado)
-                throw new DomainException("Cannot complete a canceled execution.");
-
-            if (!StartedAt.HasValue)
-                StartedAt = DateTime.UtcNow; // inicia “on the fly” se ainda não tinha sido iniciado
-
-            if (completedAt.HasValue && StartedAt.HasValue && completedAt < StartedAt)
-                throw new DomainException("CompletedAt cannot be earlier than StartedAt.");
-
-            CompletedAt = completedAt ?? DateTime.UtcNow;
-            Status = ExecutionStatus.Concluido;
-            SetRemarks(remarks);
+            UserId = userId;
             Touch();
         }
-
-        public void Cancel()
-        {
-            Cancel(DateTime.UtcNow, null);
-        }
-
-        public void Cancel(string? remarks)
-        {
-            Cancel(DateTime.UtcNow, remarks);
-        }
-
-        public void Cancel(DateTime? at, string? remarks = null)
-        {
-            if (Status == ExecutionStatus.Concluido)
-                throw new DomainException("Cannot cancel a completed execution.");
-
-            // Usa CompletedAt como “data de término” também para cancelamento
-            CompletedAt = at ?? DateTime.UtcNow;
-            Status = ExecutionStatus.Cancelado;
-            SetRemarks(remarks);
-            Touch();
-        }
-
-        // ===== Métodos auxiliares (mantidos para compatibilidade com a camada Application) =====
 
         public void SetStatus(ExecutionStatus status)
         {
-            // Evita voltar depois de concluído
-            if (Status == ExecutionStatus.Concluido && status != ExecutionStatus.Concluido)
-                throw new DomainException("Cannot change status after completion.");
-
             Status = status;
-            Touch();
-        }
-
-        public void SetTimes(DateTime? startedAt, DateTime? completedAt)
-        {
-            if (completedAt.HasValue && startedAt.HasValue && completedAt < startedAt)
-                throw new DomainException("CompletedAt cannot be earlier than StartedAt.");
-
-            StartedAt = startedAt;
-            CompletedAt = completedAt;
             Touch();
         }
 
         public void SetRemarks(string? remarks)
         {
             Remarks = string.IsNullOrWhiteSpace(remarks) ? null : remarks.Trim();
+            Touch();
+        }
+
+        /// <summary>
+        /// Ajuste direto dos timestamps (usado por mapper quando vier do DTO).
+        /// </summary>
+        public void SetTimes(DateTime? startedAtUtc, DateTime? completedAtUtc)
+        {
+            StartedAt = startedAtUtc;
+            CompletedAt = completedAtUtc;
+            Touch();
+        }
+
+        public void Start(long? userId = null)
+        {
+            UserId = userId ?? UserId;
+            Status = ExecutionStatus.Iniciado;
+            StartedAt = DateTime.UtcNow;
+            CompletedAt = null;
+            Touch();
+        }
+
+        public void Complete(string? remarks = null)
+        {
+            Status = ExecutionStatus.Concluido;
+            Remarks = string.IsNullOrWhiteSpace(remarks) ? Remarks : remarks.Trim();
+            CompletedAt = DateTime.UtcNow;
+            Touch();
+        }
+
+        public void Cancel(string? remarks = null)
+        {
+            Status = ExecutionStatus.Cancelado;
+            Remarks = string.IsNullOrWhiteSpace(remarks) ? Remarks : remarks.Trim();
+            CompletedAt = DateTime.UtcNow;
             Touch();
         }
     }

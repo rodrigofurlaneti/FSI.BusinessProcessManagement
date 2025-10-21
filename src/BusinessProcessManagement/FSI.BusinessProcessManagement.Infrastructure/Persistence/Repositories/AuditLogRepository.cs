@@ -12,6 +12,8 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Repositories
         public AuditLogRepository(BpmDbContext ctx) : base(ctx) { }
 
         public async Task<IEnumerable<AuditLog>> GetByUserAsync(long userId)
-            => await _dbSetTEntity.AsNoTracking().Where(a => a.UserId == userId).ToListAsync();
+            => await _dbSet.AsNoTracking()
+                           .Where(a => a.UserId == userId)
+                           .ToListAsync();
     }
 }
