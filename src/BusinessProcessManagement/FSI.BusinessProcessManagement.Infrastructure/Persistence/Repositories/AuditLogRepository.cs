@@ -9,7 +9,7 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Repositories
 {
     public class AuditLogRepository : GenericRepository<AuditLog>, IAuditLogRepository
     {
-        public AuditLogRepository(BpmDbContext ctx) : base(ctx) { }
+        public AuditLogRepository(BpmDbContext bpmDbContext) : base(bpmDbContext) { }
 
         public async Task<IEnumerable<AuditLog>> GetByUserAsync(long userId)
             => await _dbSet.AsNoTracking()

@@ -3,8 +3,10 @@ using FSI.BusinessProcessManagement.Api.Seed;
 using FSI.BusinessProcessManagement.Api.Services;
 using FSI.BusinessProcessManagement.Application.Interfaces;
 using FSI.BusinessProcessManagement.Application.Services;
+using FSI.BusinessProcessManagement.Domain.Interfaces;
 using FSI.BusinessProcessManagement.Infrastructure;
 using FSI.BusinessProcessManagement.Infrastructure.Persistence;
+using FSI.BusinessProcessManagement.Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -41,6 +43,7 @@ builder.Services.AddControllers(o => o.Filters.Add<ApiExceptionFilter>());
 FSI.BusinessProcessManagement.Infrastructure.DependencyInjection
     .AddInfrastructure(builder.Services, builder.Configuration);
 
+builder.Services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IDepartmentAppService, DepartmentAppService>();
 builder.Services.AddScoped<IUsuarioAppService, UsuarioAppService>();
 builder.Services.AddScoped<IRoleAppService, RoleAppService>();

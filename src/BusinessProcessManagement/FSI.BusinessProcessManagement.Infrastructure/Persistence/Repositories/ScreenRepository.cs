@@ -5,6 +5,6 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Repositories
 {
     public class ScreenRepository : GenericRepository<Screen>, IScreenRepository
     {
-        public ScreenRepository(BpmDbContext ctx) : base(ctx) { }
+        public ScreenRepository(BpmDbContext bpmDbContext) : base(bpmDbContext) { }
     }
 }

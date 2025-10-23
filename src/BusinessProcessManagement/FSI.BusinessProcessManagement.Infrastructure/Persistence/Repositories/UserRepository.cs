@@ -9,7 +9,7 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Repositories
 {
     public class UserRepository : GenericRepository<User>, IUserRepository
     {
-        public UserRepository(BpmDbContext ctx) : base(ctx) { }
+        public UserRepository(BpmDbContext bpmDbContext) : base(bpmDbContext) { }
 
         public async Task<User?> GetByUsernameAsync(string username)
             => await _dbSet.AsNoTracking()
@@ -17,10 +17,10 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Repositories
 
         public async Task<IReadOnlyList<string>> GetRoleNamesAsync(long userId)
         {
-            return await _ctx.Set<UserRole>()
+            return await _bpmDbContext.Set<UserRole>()
                              .AsNoTracking()
                              .Where(ur => ur.UserId == userId)
-                             .Join(_ctx.Set<Role>().AsNoTracking(),
+                             .Join(_bpmDbContext.Set<Role>().AsNoTracking(),
                                    ur => ur.RoleId,
                                    r => r.Id,
                                    (ur, r) => r.Name)

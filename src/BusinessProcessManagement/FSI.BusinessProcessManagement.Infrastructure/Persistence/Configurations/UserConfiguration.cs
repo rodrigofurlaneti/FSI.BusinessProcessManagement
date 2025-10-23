@@ -9,6 +9,7 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Configuration
         public void Configure(EntityTypeBuilder<User> b)
         {
             b.ToTable("User");
+
             b.HasKey(x => x.Id);
             b.Property(x => x.Id).HasColumnName("UserId");
 
@@ -16,19 +17,21 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Configuration
             b.Property(x => x.Username).HasColumnName("Username").HasMaxLength(100).IsRequired();
             b.Property(x => x.PasswordHash).HasColumnName("PasswordHash").HasMaxLength(255).IsRequired();
             b.Property(x => x.Email).HasColumnName("Email").HasMaxLength(200);
-            b.Property(x => x.IsActive).HasColumnName("IsActive").HasColumnType("tinyint(1)").IsRequired();
+            b.Property(x => x.IsActive).HasColumnName("IsActive").IsRequired();
 
-            b.Property(x => x.CreatedAt).HasColumnType("datetime(6)");
-            b.Property(x => x.UpdatedAt).HasColumnType("datetime(6)");
+            b.Property(x => x.CreatedAt).HasColumnName("CreatedAt").HasColumnType("datetime(6)");
+            b.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt").HasColumnType("datetime(6)");
 
-            b.HasIndex(x => x.Username).IsUnique().HasDatabaseName("UQ_Usuario_Username");
-            b.HasIndex(x => x.Email).IsUnique().HasDatabaseName("UQ_Usuario_Email");
+            // Relacionamento com UserRole usando backing field
+            b.HasMany(u => u.UserRoles)
+             .WithOne(ur => ur.User)
+             .HasForeignKey(ur => ur.UserId)
+             .HasConstraintName("FK_UserRole_User")
+             .OnDelete(DeleteBehavior.Cascade);
 
-            b.HasOne<Department>()
-                .WithMany()
-                .HasForeignKey(x => x.DepartmentId)
-                .HasConstraintName("FK_Usuario_Department")
-                .OnDelete(DeleteBehavior.SetNull);
+            // Informa ao EF para acessar a coleção via campo privado _userRoles
+            b.Metadata.FindNavigation(nameof(User.UserRoles))!
+                      .SetPropertyAccessMode(PropertyAccessMode.Field); // importante
         }
     }
 }

@@ -9,7 +9,7 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Repositories
 {
     public class ProcessStepRepository : GenericRepository<ProcessStep>, IProcessStepRepository
     {
-        public ProcessStepRepository(BpmDbContext ctx) : base(ctx) { }
+        public ProcessStepRepository(BpmDbContext bpmDbContext) : base(bpmDbContext) { }
 
         public async Task<IEnumerable<ProcessStep>> GetByProcessIdAsync(long processId)
             => await _dbSet.AsNoTracking()

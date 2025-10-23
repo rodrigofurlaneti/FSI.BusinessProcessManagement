@@ -5,6 +5,6 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Repositories
 {
     public class DepartmentRepository : GenericRepository<Department>, IDepartmentRepository
     {
-        public DepartmentRepository(BpmDbContext ctx) : base(ctx) { }
+        public DepartmentRepository(BpmDbContext bpmDbContext) : base(bpmDbContext) { }
     }
 }

@@ -8,13 +8,13 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Repositories
 {
     public class GenericRepository<TEntity> : IRepository<TEntity> where TEntity : class
     {
-        protected readonly BpmDbContext _ctx;
+        protected readonly BpmDbContext _bpmDbContext;
         protected readonly DbSet<TEntity> _dbSet;
 
-        public GenericRepository(BpmDbContext ctx)
+        public GenericRepository(BpmDbContext bpmDbContext)
         {
-            _ctx = ctx;
-            _dbSet = _ctx.Set<TEntity>();
+            _bpmDbContext = bpmDbContext;
+            _dbSet = _bpmDbContext.Set<TEntity>();
         }
 
         public virtual async Task<IEnumerable<TEntity>> GetAllAsync()

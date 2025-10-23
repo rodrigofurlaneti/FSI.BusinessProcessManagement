@@ -5,6 +5,6 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Repositories
 {
     public class RoleRepository : GenericRepository<Role>, IRoleRepository
     {
-        public RoleRepository(BpmDbContext ctx) : base(ctx) { }
+        public RoleRepository(BpmDbContext bpmDbContext) : base(bpmDbContext) { }
     }
 }
