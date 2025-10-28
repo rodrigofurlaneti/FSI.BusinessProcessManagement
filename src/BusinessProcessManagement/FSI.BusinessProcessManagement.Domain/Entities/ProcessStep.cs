@@ -11,7 +11,7 @@ namespace FSI.BusinessProcessManagement.Domain.Entities
 
         public string StepName { get; private set; } = string.Empty;
         public int StepOrder { get; private set; }
-        public long? AssignedRoleId { get; private set; }
+        public long? AssignedRoleId { get; private set; } 
 
         private ProcessStep() { }
 
