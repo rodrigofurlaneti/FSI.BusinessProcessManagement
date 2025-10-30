@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FSI.BusinessProcessManageme
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FSI.BusinessProcessManagement.Infrastructure", "FSI.BusinessProcessManagement.Infrastructure\FSI.BusinessProcessManagement.Infrastructure.csproj", "{D51597CB-7B01-7989-B9A7-630598FD7F4F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FSI.BusinessProcessManagement.UnitTests", "..\..\test\FSI.BusinessProcessManagement.UnitTest\FSI.BusinessProcessManagement.UnitTests.csproj", "{A2D4CB03-E3B9-4DB9-A5C8-FA5D47C9A64C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{D51597CB-7B01-7989-B9A7-630598FD7F4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D51597CB-7B01-7989-B9A7-630598FD7F4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D51597CB-7B01-7989-B9A7-630598FD7F4F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2D4CB03-E3B9-4DB9-A5C8-FA5D47C9A64C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2D4CB03-E3B9-4DB9-A5C8-FA5D47C9A64C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2D4CB03-E3B9-4DB9-A5C8-FA5D47C9A64C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2D4CB03-E3B9-4DB9-A5C8-FA5D47C9A64C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
