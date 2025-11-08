@@ -5,14 +5,10 @@ namespace FSI.BusinessProcessManagement.Domain.Entities
     public sealed class ProcessStep : BaseEntity
     {
         public long ProcessId { get; private set; }
-
-        // Alias para compatibilidade com quem chama StepId:
         public long StepId => Id;
-
         public string StepName { get; private set; } = string.Empty;
         public int StepOrder { get; private set; }
         public long? AssignedRoleId { get; private set; } 
-
         private ProcessStep() { }
 
         public ProcessStep(long processId, string stepName, int stepOrder, long? assignedRoleId)

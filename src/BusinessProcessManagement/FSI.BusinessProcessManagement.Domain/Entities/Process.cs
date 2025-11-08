@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using FSI.BusinessProcessManagement.Domain.Exceptions;
 
@@ -10,15 +11,20 @@ namespace FSI.BusinessProcessManagement.Domain.Entities
         public long? DepartmentId { get; private set; }
         public string? Description { get; private set; }
         public long? CreatedBy { get; private set; }
-
         private readonly List<ProcessStep> _steps = new();
-        public IReadOnlyCollection<ProcessStep> Steps => _steps;
+        private readonly ReadOnlyCollection<ProcessStep> _stepsView;
 
-        // Requisito do EF
-        private Process() { }
+        public IReadOnlyList<ProcessStep> Steps => _stepsView;
+
+        // EF
+        private Process()
+        {
+            _stepsView = _steps.AsReadOnly();
+        }
 
         public Process(string name, long? departmentId = null, string? description = null, long? createdBy = null)
         {
+            _stepsView = _steps.AsReadOnly(); // cacheia a view uma única vez
             SetName(name);
             DepartmentId = departmentId;
             Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
@@ -61,6 +67,7 @@ namespace FSI.BusinessProcessManagement.Domain.Entities
             if (_steps.Any(s => s.StepOrder == stepOrder))
                 throw new DomainException($"A step with order {stepOrder} already exists.");
 
+            // Atenção: se this.Id == 0 (entidade não persistida), o ctor de ProcessStep pode negar.
             var step = new ProcessStep(this.Id, stepName.Trim(), stepOrder, assignedRoleId);
             _steps.Add(step);
             Touch();
@@ -75,14 +82,13 @@ namespace FSI.BusinessProcessManagement.Domain.Entities
             Touch();
         }
 
-        /// <summary>
-        /// Inicia uma execução deste processo na etapa informada.
-        /// (Regra de domínio: criação da execução parte do agregado Process)
-        /// </summary>
         public ProcessExecution StartExecution(long stepId, long? userId = null)
         {
             if (stepId <= 0) throw new DomainException("StepId is invalid.");
-            // (Opcional) você pode validar se o step pertence ao processo se a coleção Steps estiver carregada
+
+            if (!_steps.Any(s => s.Id == stepId || s.StepId == stepId))
+                 throw new DomainException("Step does not belong to this process.");
+
             var exec = new ProcessExecution(this.Id, stepId, userId);
             Touch();
             return exec;

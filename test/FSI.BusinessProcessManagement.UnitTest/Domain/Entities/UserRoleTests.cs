@@ -9,275 +9,248 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
 {
     public class UserRoleTests
     {
-        // -----------------------------------------------------------------------------------------
-        // 1. CONTRATO / ESTRUTURA
-        // -----------------------------------------------------------------------------------------
+        private static DateTime MinWhenNull(DateTime? dt) => dt ?? DateTime.MinValue;
+
+        // ------------------------------------------------------------
+        // 1) CONTRATO / ESTRUTURA
+        // ------------------------------------------------------------
 
         [Fact]
-        public void UserRole_Class_MustBeSealed_And_Inherit_BaseEntity()
+        public void UserRole_Class_Must_Be_Sealed_And_Inherit_BaseEntity()
         {
             var t = typeof(UserRole);
 
-            Assert.True(t.IsSealed, "UserRole deve continuar sendo sealed.");
+            Assert.NotNull(t);
+            Assert.True(t.IsSealed, "UserRole deve continuar sealed.");
             Assert.Equal(typeof(BaseEntity), t.BaseType);
         }
 
         [Fact]
-        public void UserRole_Properties_MustExist_WithExpectedTypes_And_PrivateSetters()
+        public void UserRole_Properties_Must_Exist_With_Expected_Types_And_PrivateSetters()
         {
             var t = typeof(UserRole);
 
             // UserId
-            var userIdProp = t.GetProperty("UserId", BindingFlags.Public | BindingFlags.Instance);
-            Assert.NotNull(userIdProp);
-            Assert.Equal(typeof(long), userIdProp!.PropertyType);
-            Assert.NotNull(userIdProp.GetGetMethod());
-            Assert.Null(userIdProp.GetSetMethod());
-            var userIdSetter = userIdProp.GetSetMethod(true);
-            Assert.NotNull(userIdSetter);
-            Assert.True(userIdSetter!.IsPrivate, "UserId deve manter 'private set;'.");
+            var userId = t.GetProperty("UserId", BindingFlags.Public | BindingFlags.Instance);
+            Assert.NotNull(userId);
+            Assert.Equal(typeof(long), userId!.PropertyType);
+            Assert.True(userId.GetGetMethod()!.IsPublic);
+            Assert.Null(userId.GetSetMethod());
+            Assert.True(userId.GetSetMethod(true)!.IsPrivate);
 
             // RoleId
-            var roleIdProp = t.GetProperty("RoleId", BindingFlags.Public | BindingFlags.Instance);
-            Assert.NotNull(roleIdProp);
-            Assert.Equal(typeof(long), roleIdProp!.PropertyType);
-            Assert.NotNull(roleIdProp.GetGetMethod());
-            Assert.Null(roleIdProp.GetSetMethod());
-            var roleIdSetter = roleIdProp.GetSetMethod(true);
-            Assert.NotNull(roleIdSetter);
-            Assert.True(roleIdSetter!.IsPrivate, "RoleId deve manter 'private set;'.");
+            var roleId = t.GetProperty("RoleId", BindingFlags.Public | BindingFlags.Instance);
+            Assert.NotNull(roleId);
+            Assert.Equal(typeof(long), roleId!.PropertyType);
+            Assert.True(roleId.GetGetMethod()!.IsPublic);
+            Assert.Null(roleId.GetSetMethod());
+            Assert.True(roleId.GetSetMethod(true)!.IsPrivate);
 
             // AssignedAt
-            var assignedAtProp = t.GetProperty("AssignedAt", BindingFlags.Public | BindingFlags.Instance);
-            Assert.NotNull(assignedAtProp);
-            Assert.Equal(typeof(DateTime), assignedAtProp!.PropertyType);
-            Assert.NotNull(assignedAtProp.GetGetMethod());
-            Assert.Null(assignedAtProp.GetSetMethod());
-            var assignedAtSetter = assignedAtProp.GetSetMethod(true);
-            Assert.NotNull(assignedAtSetter);
-            Assert.True(assignedAtSetter!.IsPrivate,
-                "AssignedAt deve manter 'private set;'.");
+            var assignedAt = t.GetProperty("AssignedAt", BindingFlags.Public | BindingFlags.Instance);
+            Assert.NotNull(assignedAt);
+            Assert.Equal(typeof(DateTime), assignedAt!.PropertyType);
+            Assert.True(assignedAt.GetGetMethod()!.IsPublic);
+            Assert.Null(assignedAt.GetSetMethod());
+            Assert.True(assignedAt.GetSetMethod(true)!.IsPrivate);
 
-            // User (nav prop)
+            // User (navegação)
             var userProp = t.GetProperty("User", BindingFlags.Public | BindingFlags.Instance);
             Assert.NotNull(userProp);
             Assert.Equal(typeof(User), userProp!.PropertyType);
-            Assert.NotNull(userProp.GetGetMethod());
+            Assert.True(userProp.GetGetMethod()!.IsPublic);
             Assert.Null(userProp.GetSetMethod());
-            var userSetter = userProp.GetSetMethod(true);
-            Assert.NotNull(userSetter);
-            Assert.True(userSetter!.IsPrivate,
-                "User navigation deve manter 'private set;'.");
+            Assert.True(userProp.GetSetMethod(true)!.IsPrivate);
 
-            // Role (nav prop)
+            // Role (navegação)
             var roleProp = t.GetProperty("Role", BindingFlags.Public | BindingFlags.Instance);
             Assert.NotNull(roleProp);
             Assert.Equal(typeof(Role), roleProp!.PropertyType);
-            Assert.NotNull(roleProp.GetGetMethod());
+            Assert.True(roleProp.GetGetMethod()!.IsPublic);
             Assert.Null(roleProp.GetSetMethod());
-            var roleSetter = roleProp.GetSetMethod(true);
-            Assert.NotNull(roleSetter);
-            Assert.True(roleSetter!.IsPrivate,
-                "Role navigation deve manter 'private set;'.");
+            Assert.True(roleProp.GetSetMethod(true)!.IsPrivate);
         }
 
         [Fact]
-        public void UserRole_MustHave_PrivateParameterlessCtor_And_PublicCtor_WithExpectedSignature()
+        public void Must_Have_Private_Parameterless_Constructor_And_Public_MainConstructor()
         {
             var t = typeof(UserRole);
 
-            // construtor privado sem parâmetros (para EF)
+            // Ctor privado sem parâmetros (EF)
             var privateCtor = t
                 .GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance)
                 .FirstOrDefault(c => c.GetParameters().Length == 0);
-
             Assert.NotNull(privateCtor);
-            Assert.True(privateCtor!.IsPrivate,
-                "O construtor vazio deve continuar private para EF.");
+            Assert.True(privateCtor!.IsPrivate, "Ctor vazio deve permanecer private (EF).");
 
-            // construtor público esperado: UserRole(long userId, long roleId)
+            // Ctor público esperado: (long userId, long roleId)
             var publicCtor = t
                 .GetConstructors(BindingFlags.Public | BindingFlags.Instance)
                 .FirstOrDefault(c =>
                 {
                     var p = c.GetParameters();
                     return p.Length == 2
-                        && p[0].ParameterType == typeof(long)
-                        && p[1].ParameterType == typeof(long);
+                           && p[0].ParameterType == typeof(long)
+                           && p[1].ParameterType == typeof(long);
                 });
-
             Assert.NotNull(publicCtor);
         }
 
         [Fact]
-        public void UserRole_PublicMethods_MustExist_WithExpectedSignatures()
+        public void Public_Methods_Signatures_Must_Remain()
         {
             var t = typeof(UserRole);
 
-            // SetUser(long userId)
             var setUser = t.GetMethod("SetUser", BindingFlags.Public | BindingFlags.Instance);
             Assert.NotNull(setUser);
-            var suParams = setUser!.GetParameters();
-            Assert.Single(suParams);
-            Assert.Equal(typeof(long), suParams[0].ParameterType);
+            Assert.Equal(typeof(long), setUser!.GetParameters()[0].ParameterType);
 
-            // SetRole(long roleId)
             var setRole = t.GetMethod("SetRole", BindingFlags.Public | BindingFlags.Instance);
             Assert.NotNull(setRole);
-            var srParams = setRole!.GetParameters();
-            Assert.Single(srParams);
-            Assert.Equal(typeof(long), srParams[0].ParameterType);
+            Assert.Equal(typeof(long), setRole!.GetParameters()[0].ParameterType);
         }
 
-        // -----------------------------------------------------------------------------------------
-        // 2. CONSTRUTOR / INICIALIZAÇÃO
-        // -----------------------------------------------------------------------------------------
+        // ------------------------------------------------------------
+        // 2) CONSTRUTOR / ESTADO INICIAL
+        // ------------------------------------------------------------
 
         [Fact]
-        public void Constructor_WithValidIds_ShouldInitializeFields_AndAssignAssignedAtUtcNow_AndTouch()
+        public void Constructor_WithValidArgs_ShouldInitialize_AllFields_AndTouch()
         {
-            // Arrange
             var beforeUtc = DateTime.UtcNow;
 
-            // Act
-            var userRole = new UserRole(userId: 10, roleId: 20);
+            var ur = new UserRole(userId: 10, roleId: 20);
 
             var afterUtc = DateTime.UtcNow;
 
-            // Assert
-            Assert.Equal(10, userRole.UserId);
-            Assert.Equal(20, userRole.RoleId);
+            Assert.Equal(10, ur.UserId);
+            Assert.Equal(20, ur.RoleId);
 
-            // AssignedAt deve ser definido no construtor com UtcNow
-            Assert.InRange(userRole.AssignedAt, beforeUtc, afterUtc);
+            // AssignedAt definido no construtor (UtcNow)
+            Assert.InRange(ur.AssignedAt, beforeUtc, afterUtc);
 
-            // Navegações começam em null! (não populadas automaticamente)
-            // null! é tratado como "será setado pelo EF", então aqui pode ainda estar null em runtime puro.
-            // Não vamos forçar um valor aqui, apenas garantir que as props existem.
-            Assert.True(userRole.User == null || userRole.User is User);
-            Assert.True(userRole.Role == null || userRole.Role is Role);
+            // Navegações não são populadas no construtor
+            Assert.Null(ur.User);
+            Assert.Null(ur.Role);
 
-            // SetUser e SetRole chamam Touch() -> então UpdatedAt precisa ter sido preenchido
-            Assert.NotNull(userRole.UpdatedAt);
-            Assert.InRange(userRole.UpdatedAt!.Value, beforeUtc, afterUtc);
-
-            // CreatedAt inicializado no BaseEntity
-            Assert.True(userRole.CreatedAt <= DateTime.Now && userRole.CreatedAt > DateTime.Now.AddMinutes(-1));
-        }
-
-        [Theory]
-        [InlineData(0, 1)]
-        [InlineData(-1, 1)]
-        [InlineData(-999, 1)]
-        public void Constructor_WithInvalidUserId_ShouldThrowDomainException(long invalidUserId, long validRoleId)
-        {
-            var ex = Assert.Throws<DomainException>(() => new UserRole(invalidUserId, validRoleId));
-            Assert.Equal("Invalid UserId.", ex.Message);
-        }
-
-        [Theory]
-        [InlineData(1, 0)]
-        [InlineData(1, -1)]
-        [InlineData(1, -999)]
-        public void Constructor_WithInvalidRoleId_ShouldThrowDomainException(long validUserId, long invalidRoleId)
-        {
-            var ex = Assert.Throws<DomainException>(() => new UserRole(validUserId, invalidRoleId));
-            Assert.Equal("Invalid RoleId.", ex.Message);
-        }
-
-        // -----------------------------------------------------------------------------------------
-        // 3. SetUser
-        // -----------------------------------------------------------------------------------------
-
-        [Fact]
-        public void SetUser_WithValidValue_ShouldUpdateUserId_AndTouch()
-        {
-            // Arrange
-            var ur = new UserRole(10, 20);
-            var beforeUpdatedAt = ur.UpdatedAt;
-
-            System.Threading.Thread.Sleep(5);
-
-            // Act
-            ur.SetUser(777);
-
-            // Assert
-            Assert.Equal(777, ur.UserId);
+            // SetUser/SetRole chamam Touch()
             Assert.NotNull(ur.UpdatedAt);
-            Assert.True(ur.UpdatedAt >= beforeUpdatedAt,
-                "SetUser deve chamar Touch() e atualizar UpdatedAt.");
+            Assert.True(ur.UpdatedAt!.Value >= beforeUtc && ur.UpdatedAt!.Value <= afterUtc);
         }
 
         [Theory]
         [InlineData(0)]
         [InlineData(-1)]
-        [InlineData(-50)]
-        public void SetUser_WithInvalid_ShouldThrowDomainException(long invalidUserId)
+        [InlineData(-99)]
+        public void Constructor_InvalidUser_ShouldThrow(long invalidUserId)
         {
-            var ur = new UserRole(10, 20);
+            var ex = Assert.Throws<DomainException>(() => new UserRole(invalidUserId, roleId: 1));
+            Assert.Equal("Invalid UserId.", ex.Message);
+        }
 
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        [InlineData(-99)]
+        public void Constructor_InvalidRole_ShouldThrow(long invalidRoleId)
+        {
+            var ex = Assert.Throws<DomainException>(() => new UserRole(userId: 1, roleId: invalidRoleId));
+            Assert.Equal("Invalid RoleId.", ex.Message);
+        }
+
+        // ------------------------------------------------------------
+        // 3) SetUser
+        // ------------------------------------------------------------
+
+        [Fact]
+        public void SetUser_WithValidValue_ShouldAssign_And_Touch()
+        {
+            var ur = new UserRole(1, 2);
+            var before = MinWhenNull(ur.UpdatedAt);
+
+            ur.SetUser(99);
+            var after = MinWhenNull(ur.UpdatedAt);
+
+            Assert.Equal(99, ur.UserId);
+            Assert.True(after > before, "SetUser deve chamar Touch() e avançar UpdatedAt.");
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        [InlineData(-5)]
+        public void SetUser_WithInvalidValue_ShouldThrow(long invalidUserId)
+        {
+            var ur = new UserRole(1, 2);
             var ex = Assert.Throws<DomainException>(() => ur.SetUser(invalidUserId));
             Assert.Equal("Invalid UserId.", ex.Message);
         }
 
-        // -----------------------------------------------------------------------------------------
-        // 4. SetRole
-        // -----------------------------------------------------------------------------------------
+        // ------------------------------------------------------------
+        // 4) SetRole
+        // ------------------------------------------------------------
 
         [Fact]
-        public void SetRole_WithValidValue_ShouldUpdateRoleId_AndTouch()
+        public void SetRole_WithValidValue_ShouldAssign_And_Touch()
         {
-            // Arrange
-            var ur = new UserRole(10, 20);
-            var beforeUpdatedAt = ur.UpdatedAt;
+            var ur = new UserRole(1, 2);
+            var before = MinWhenNull(ur.UpdatedAt);
 
-            System.Threading.Thread.Sleep(5);
+            ur.SetRole(77);
+            var after = MinWhenNull(ur.UpdatedAt);
 
-            // Act
-            ur.SetRole(999);
-
-            // Assert
-            Assert.Equal(999, ur.RoleId);
-            Assert.NotNull(ur.UpdatedAt);
-            Assert.True(ur.UpdatedAt >= beforeUpdatedAt,
-                "SetRole deve chamar Touch() e atualizar UpdatedAt.");
+            Assert.Equal(77, ur.RoleId);
+            Assert.True(after > before, "SetRole deve chamar Touch() e avançar UpdatedAt.");
         }
 
         [Theory]
         [InlineData(0)]
         [InlineData(-1)]
-        [InlineData(-999)]
-        public void SetRole_WithInvalid_ShouldThrowDomainException(long invalidRoleId)
+        [InlineData(-5)]
+        public void SetRole_WithInvalidValue_ShouldThrow(long invalidRoleId)
         {
-            var ur = new UserRole(10, 20);
-
+            var ur = new UserRole(1, 2);
             var ex = Assert.Throws<DomainException>(() => ur.SetRole(invalidRoleId));
             Assert.Equal("Invalid RoleId.", ex.Message);
         }
 
-        // -----------------------------------------------------------------------------------------
-        // 5. MUTATION STABILITY / TOUCH()
-        // -----------------------------------------------------------------------------------------
+        // ------------------------------------------------------------
+        // 5) Mutation stability (ordem de toques)
+        // ------------------------------------------------------------
 
         [Fact]
-        public void Mutation_Methods_ShouldNotThrow_And_ShouldAdvanceUpdatedAt()
+        public void Mutation_Methods_ShouldAlwaysAdvance_UpdatedAt_InOrder()
         {
-            var ur = new UserRole(10, 20);
+            var ur = new UserRole(1, 2);
 
-            var ex1 = Record.Exception(() => ur.SetUser(111));
-            var ts1 = ur.UpdatedAt;
+            var t0 = MinWhenNull(ur.UpdatedAt);
 
-            var ex2 = Record.Exception(() => ur.SetRole(222));
-            var ts2 = ur.UpdatedAt;
+            ur.SetUser(10);
+            var t1 = MinWhenNull(ur.UpdatedAt);
+            Assert.True(t1 > t0);
 
-            Assert.Null(ex1);
-            Assert.Null(ex2);
+            ur.SetRole(20);
+            var t2 = MinWhenNull(ur.UpdatedAt);
+            Assert.True(t2 > t1);
+        }
 
-            Assert.NotNull(ts1);
-            Assert.NotNull(ts2);
+        [Fact]
+        public void Create_WithNavigations_ShouldBindUserAndRole_AndKeepFKsConsistent()
+        {
+            var user = (User)Activator.CreateInstance(typeof(User), nonPublic: true)!;
+            var role = (Role)Activator.CreateInstance(typeof(Role), nonPublic: true)!;
 
-            Assert.True(ts2 >= ts1,
-                "UpdatedAt deve avançar após segunda mutação (SetRole depois de SetUser).");
+            typeof(BaseEntity).GetProperty("Id", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!
+                .SetValue(user, 10L);
+            typeof(BaseEntity).GetProperty("Id", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!
+                .SetValue(role, 20L);
+
+            var ur = UserRole.Create(user, role);
+
+            Assert.Equal(10, ur.UserId);
+            Assert.Equal(20, ur.RoleId);
+            Assert.Same(user, ur.User);
+            Assert.Same(role, ur.Role);
         }
     }
 }

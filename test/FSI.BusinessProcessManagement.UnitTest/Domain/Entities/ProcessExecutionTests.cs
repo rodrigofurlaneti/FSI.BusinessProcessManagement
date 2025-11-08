@@ -20,10 +20,7 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
             var t = typeof(ProcessExecution);
 
             Assert.NotNull(t);
-
-            Assert.True(t.IsSealed,
-                "ProcessExecution deve continuar sealed. Se mudar, atualize o teste.");
-
+            Assert.True(t.IsSealed, "ProcessExecution deve continuar sealed. Se mudar, atualize o teste.");
             Assert.True(t.BaseType == typeof(BaseEntity),
                 "ProcessExecution deve continuar herdando BaseEntity. Se mudar a herança, atualize o teste.");
         }
@@ -38,63 +35,49 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
             Assert.NotNull(processIdProp);
             Assert.Equal(typeof(long), processIdProp!.PropertyType);
             Assert.NotNull(processIdProp.GetGetMethod());
-            Assert.Null(processIdProp.GetSetMethod());
-            Assert.True(processIdProp.GetSetMethod(true)!.IsPrivate,
-                "ProcessId deve continuar com private set;");
+            Assert.True(processIdProp.GetSetMethod(true)!.IsPrivate, "ProcessId deve continuar com private set;");
 
             // StepId
             var stepIdProp = t.GetProperty("StepId", BindingFlags.Public | BindingFlags.Instance);
             Assert.NotNull(stepIdProp);
             Assert.Equal(typeof(long), stepIdProp!.PropertyType);
             Assert.NotNull(stepIdProp.GetGetMethod());
-            Assert.Null(stepIdProp.GetSetMethod());
-            Assert.True(stepIdProp.GetSetMethod(true)!.IsPrivate,
-                "StepId deve continuar com private set;");
+            Assert.True(stepIdProp.GetSetMethod(true)!.IsPrivate, "StepId deve continuar com private set;");
 
             // UserId
             var userIdProp = t.GetProperty("UserId", BindingFlags.Public | BindingFlags.Instance);
             Assert.NotNull(userIdProp);
             Assert.Equal(typeof(long?), userIdProp!.PropertyType);
             Assert.NotNull(userIdProp.GetGetMethod());
-            Assert.Null(userIdProp.GetSetMethod());
-            Assert.True(userIdProp.GetSetMethod(true)!.IsPrivate,
-                "UserId deve continuar com private set;");
+            Assert.True(userIdProp.GetSetMethod(true)!.IsPrivate, "UserId deve continuar com private set;");
 
             // Status
             var statusProp = t.GetProperty("Status", BindingFlags.Public | BindingFlags.Instance);
             Assert.NotNull(statusProp);
             Assert.Equal(typeof(ExecutionStatus), statusProp!.PropertyType);
             Assert.NotNull(statusProp.GetGetMethod());
-            Assert.Null(statusProp.GetSetMethod());
-            Assert.True(statusProp.GetSetMethod(true)!.IsPrivate,
-                "Status deve continuar com private set;");
+            Assert.True(statusProp.GetSetMethod(true)!.IsPrivate, "Status deve continuar com private set;");
 
             // StartedAt
             var startedAtProp = t.GetProperty("StartedAt", BindingFlags.Public | BindingFlags.Instance);
             Assert.NotNull(startedAtProp);
             Assert.Equal(typeof(DateTime?), startedAtProp!.PropertyType);
             Assert.NotNull(startedAtProp.GetGetMethod());
-            Assert.Null(startedAtProp.GetSetMethod());
-            Assert.True(startedAtProp.GetSetMethod(true)!.IsPrivate,
-                "StartedAt deve continuar com private set;");
+            Assert.True(startedAtProp.GetSetMethod(true)!.IsPrivate, "StartedAt deve continuar com private set;");
 
             // CompletedAt
             var completedAtProp = t.GetProperty("CompletedAt", BindingFlags.Public | BindingFlags.Instance);
             Assert.NotNull(completedAtProp);
             Assert.Equal(typeof(DateTime?), completedAtProp!.PropertyType);
             Assert.NotNull(completedAtProp.GetGetMethod());
-            Assert.Null(completedAtProp.GetSetMethod());
-            Assert.True(completedAtProp.GetSetMethod(true)!.IsPrivate,
-                "CompletedAt deve continuar com private set;");
+            Assert.True(completedAtProp.GetSetMethod(true)!.IsPrivate, "CompletedAt deve continuar com private set;");
 
             // Remarks
             var remarksProp = t.GetProperty("Remarks", BindingFlags.Public | BindingFlags.Instance);
             Assert.NotNull(remarksProp);
-            Assert.Equal(typeof(string), remarksProp!.PropertyType); // string? em runtime é System.String
+            Assert.Equal(typeof(string), remarksProp!.PropertyType); // string? -> System.String
             Assert.NotNull(remarksProp.GetGetMethod());
-            Assert.Null(remarksProp.GetSetMethod());
-            Assert.True(remarksProp.GetSetMethod(true)!.IsPrivate,
-                "Remarks deve continuar com private set;");
+            Assert.True(remarksProp.GetSetMethod(true)!.IsPrivate, "Remarks deve continuar com private set;");
         }
 
         [Fact]
@@ -108,8 +91,7 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
                 .FirstOrDefault(c => c.GetParameters().Length == 0);
 
             Assert.NotNull(privateCtor);
-            Assert.True(privateCtor!.IsPrivate,
-                "O construtor vazio deve continuar private. Se mudar, atualize o teste.");
+            Assert.True(privateCtor!.IsPrivate, "O construtor vazio deve continuar private. Se mudar, atualize o teste.");
 
             // ctor público (long processId, long stepId, long? userId = null)
             var publicCtor = t
@@ -194,7 +176,6 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
 
             // Act
             var exec = new ProcessExecution(processId: 10, stepId: 20, userId: 30);
-
             var afterUtc = DateTime.UtcNow;
 
             // Assert
@@ -211,10 +192,7 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
 
             Assert.Null(exec.CompletedAt);
             Assert.Null(exec.Remarks);
-
-            // UpdatedAt ainda pode ser null, porque construtor não chama Touch()
-            // (Touch só aparece nos métodos mutadores).
-            // Não vamos exigir UpdatedAt != null aqui.
+            // UpdatedAt pode ser null no construtor (Touch é chamado nos mutadores)
         }
 
         [Fact]
@@ -261,16 +239,14 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         public void SetStep_WithValidId_ShouldUpdateStepId_AndTouch()
         {
             var exec = new ProcessExecution(10, 20, 30);
-            var before = exec.UpdatedAt;
-
-            System.Threading.Thread.Sleep(5);
+            var before = exec.UpdatedAt ?? DateTime.MinValue;
 
             exec.SetStep(99);
+            var after = exec.UpdatedAt ?? DateTime.MinValue;
 
             Assert.Equal(99, exec.StepId);
-            Assert.NotNull(exec.UpdatedAt);
-            Assert.True(exec.UpdatedAt >= before,
-                "SetStep deve chamar Touch() e atualizar UpdatedAt.");
+            Assert.True(after > before,
+                $"Expected UpdatedAt to be greater than before. Before={before:o}, After={after:o}");
         }
 
         [Theory]
@@ -280,7 +256,6 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         public void SetStep_WithInvalidId_ShouldThrowDomainException(long invalid)
         {
             var exec = new ProcessExecution(10, 20, 30);
-
             var ex = Assert.Throws<DomainException>(() => exec.SetStep(invalid));
             Assert.Equal("StepId is invalid.", ex.Message);
         }
@@ -293,29 +268,28 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         public void SetUser_ShouldUpdateUserId_AndTouch()
         {
             var exec = new ProcessExecution(10, 20, null);
-            var before = exec.UpdatedAt;
+            var before = exec.UpdatedAt ?? DateTime.MinValue;
 
-            System.Threading.Thread.Sleep(5);
             exec.SetUser(123);
+            var after = exec.UpdatedAt ?? DateTime.MinValue;
 
             Assert.Equal(123, exec.UserId);
-            Assert.NotNull(exec.UpdatedAt);
-            Assert.True(exec.UpdatedAt >= before,
-                "SetUser deve chamar Touch() e atualizar UpdatedAt.");
+            Assert.True(after > before,
+                $"Expected UpdatedAt to be greater than before. Before={before:o}, After={after:o}");
         }
 
         [Fact]
         public void SetUser_ShouldAcceptNull_AndTouch()
         {
             var exec = new ProcessExecution(10, 20, 99);
-            var before = exec.UpdatedAt;
+            var before = exec.UpdatedAt ?? DateTime.MinValue;
 
-            System.Threading.Thread.Sleep(5);
             exec.SetUser(null);
+            var after = exec.UpdatedAt ?? DateTime.MinValue;
 
             Assert.Null(exec.UserId);
-            Assert.NotNull(exec.UpdatedAt);
-            Assert.True(exec.UpdatedAt >= before);
+            Assert.True(after > before,
+                $"Expected UpdatedAt to be greater than before. Before={before:o}, After={after:o}");
         }
 
         // ------------------------------------------------------------------------------------------------
@@ -326,15 +300,13 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         public void SetStatus_ShouldUpdateStatus_AndTouch()
         {
             var exec = new ProcessExecution(10, 20, 30);
-            var before = exec.UpdatedAt;
+            var before = exec.UpdatedAt ?? DateTime.MinValue;
 
-            System.Threading.Thread.Sleep(5);
             exec.SetStatus(ExecutionStatus.Cancelado);
+            var after = exec.UpdatedAt ?? DateTime.MinValue;
 
             Assert.Equal(ExecutionStatus.Cancelado, exec.Status);
-            Assert.NotNull(exec.UpdatedAt);
-            Assert.True(exec.UpdatedAt >= before,
-                "SetStatus deve chamar Touch().");
+            Assert.True(after > before, "SetStatus deve chamar Touch().");
         }
 
         // ------------------------------------------------------------------------------------------------
@@ -345,15 +317,13 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         public void SetRemarks_WithValidText_ShouldTrimAndUpdate_AndTouch()
         {
             var exec = new ProcessExecution(10, 20, 30);
-            var before = exec.UpdatedAt;
+            var before = exec.UpdatedAt ?? DateTime.MinValue;
 
-            System.Threading.Thread.Sleep(5);
             exec.SetRemarks("   algum apontamento importante   ");
+            var after = exec.UpdatedAt ?? DateTime.MinValue;
 
             Assert.Equal("algum apontamento importante", exec.Remarks);
-            Assert.NotNull(exec.UpdatedAt);
-            Assert.True(exec.UpdatedAt >= before,
-                "SetRemarks deve chamar Touch().");
+            Assert.True(after > before, "SetRemarks deve chamar Touch().");
         }
 
         [Theory]
@@ -363,15 +333,13 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         public void SetRemarks_WithNullOrWhitespace_ShouldBecomeNull_AndTouch(string? input)
         {
             var exec = new ProcessExecution(10, 20, 30);
-            var before = exec.UpdatedAt;
+            var before = exec.UpdatedAt ?? DateTime.MinValue;
 
-            System.Threading.Thread.Sleep(5);
             exec.SetRemarks(input);
+            var after = exec.UpdatedAt ?? DateTime.MinValue;
 
             Assert.Null(exec.Remarks);
-            Assert.NotNull(exec.UpdatedAt);
-            Assert.True(exec.UpdatedAt >= before,
-                "SetRemarks deve chamar Touch() mesmo limpando.");
+            Assert.True(after > before, "SetRemarks deve chamar Touch() mesmo limpando.");
         }
 
         // ------------------------------------------------------------------------------------------------
@@ -386,34 +354,28 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
             var newStart = DateTime.UtcNow.AddHours(-1);
             var newEnd = DateTime.UtcNow;
 
-            var before = exec.UpdatedAt;
-            System.Threading.Thread.Sleep(5);
+            var before = exec.UpdatedAt ?? DateTime.MinValue;
 
             exec.SetTimes(newStart, newEnd);
+            var after = exec.UpdatedAt ?? DateTime.MinValue;
 
             Assert.Equal(newStart, exec.StartedAt);
             Assert.Equal(newEnd, exec.CompletedAt);
-
-            Assert.NotNull(exec.UpdatedAt);
-            Assert.True(exec.UpdatedAt >= before,
-                "SetTimes deve chamar Touch().");
+            Assert.True(after > before, "SetTimes deve chamar Touch().");
         }
 
         [Fact]
-        public void SetTimes_ShouldAcceptNulls()
+        public void SetTimes_ShouldAcceptNulls_AndTouch()
         {
             var exec = new ProcessExecution(10, 20, 30);
-
-            var before = exec.UpdatedAt;
-            System.Threading.Thread.Sleep(5);
+            var before = exec.UpdatedAt ?? DateTime.MinValue;
 
             exec.SetTimes(null, null);
+            var after = exec.UpdatedAt ?? DateTime.MinValue;
 
             Assert.Null(exec.StartedAt);
             Assert.Null(exec.CompletedAt);
-
-            Assert.NotNull(exec.UpdatedAt);
-            Assert.True(exec.UpdatedAt >= before);
+            Assert.True(after > before);
         }
 
         // ------------------------------------------------------------------------------------------------
@@ -423,23 +385,18 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         [Fact]
         public void Start_ShouldSetStatusToIniciado_SetStartedAtUtcNow_ResetCompletedAt_AndTouch()
         {
-            // Arrange
             var exec = new ProcessExecution(10, 20, 30);
-            exec.SetStatus(ExecutionStatus.Pendente); // força outro estado inicial
+            exec.SetStatus(ExecutionStatus.Pendente); // força outro estado
             exec.SetTimes(DateTime.UtcNow.AddHours(-2), DateTime.UtcNow.AddHours(-1)); // simula já ter completado
             exec.SetRemarks("antigo");
 
             var beforeUtc = DateTime.UtcNow;
-            var beforeUpdatedAt = exec.UpdatedAt;
+            var beforeUpdatedAt = exec.UpdatedAt ?? DateTime.MinValue;
 
-            System.Threading.Thread.Sleep(5);
-
-            // Act
             exec.Start(userId: 777);
-
             var afterUtc = DateTime.UtcNow;
+            var afterUpdatedAt = exec.UpdatedAt ?? DateTime.MinValue;
 
-            // Assert
             Assert.Equal(777, exec.UserId);
             Assert.Equal(ExecutionStatus.Iniciado, exec.Status);
 
@@ -448,23 +405,17 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
                 "Start() deve atualizar StartedAt com UtcNow.");
 
             Assert.Null(exec.CompletedAt);
-
-            Assert.NotNull(exec.UpdatedAt);
-            Assert.True(exec.UpdatedAt >= beforeUpdatedAt,
-                "Start() deve chamar Touch().");
+            Assert.True(afterUpdatedAt > beforeUpdatedAt, "Start() deve chamar Touch().");
         }
 
         [Fact]
         public void Start_ShouldNotOverrideUserId_WhenUserIdParameterIsNull()
         {
-            // Arrange
             var exec = new ProcessExecution(10, 20, 30); // já tem UserId=30
             var beforeUser = exec.UserId;
 
-            // Act
             exec.Start(userId: null);
 
-            // Assert
             Assert.Equal(beforeUser, exec.UserId);
             Assert.Equal(ExecutionStatus.Iniciado, exec.Status);
             Assert.NotNull(exec.StartedAt);
@@ -478,20 +429,15 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         [Fact]
         public void Complete_ShouldSetStatusToConcluido_SetCompletedAtUtcNow_KeepOrUpdateRemarks_AndTouch()
         {
-            // Arrange
             var exec = new ProcessExecution(10, 20, 30);
             exec.SetRemarks(" já tinha observação ");
-            var beforeUpdatedAt = exec.UpdatedAt;
+            var beforeUpdatedAt = exec.UpdatedAt ?? DateTime.MinValue;
             var beforeUtc = DateTime.UtcNow;
 
-            System.Threading.Thread.Sleep(5);
-
-            // Act
             exec.Complete("   finalizado sem pendências   ");
-
             var afterUtc = DateTime.UtcNow;
+            var afterUpdatedAt = exec.UpdatedAt ?? DateTime.MinValue;
 
-            // Assert
             Assert.Equal(ExecutionStatus.Concluido, exec.Status);
 
             Assert.NotNull(exec.CompletedAt);
@@ -499,41 +445,32 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
                 "Complete() deve definir CompletedAt = UtcNow.");
 
             Assert.Equal("finalizado sem pendências", exec.Remarks);
-
-            Assert.NotNull(exec.UpdatedAt);
-            Assert.True(exec.UpdatedAt >= beforeUpdatedAt,
-                "Complete() deve chamar Touch().");
+            Assert.True(afterUpdatedAt > beforeUpdatedAt, "Complete() deve chamar Touch().");
         }
 
         [Fact]
         public void Complete_WithNullRemarks_ShouldKeepExistingRemarks()
         {
-            // Arrange
             var exec = new ProcessExecution(10, 20, 30);
             exec.SetRemarks("observação inicial");
 
-            // Act
             exec.Complete(null);
 
-            // Assert
             Assert.Equal(ExecutionStatus.Concluido, exec.Status);
-            Assert.Equal("observação inicial", exec.Remarks); // mantém
+            Assert.Equal("observação inicial", exec.Remarks);
             Assert.NotNull(exec.CompletedAt);
         }
 
         [Fact]
         public void Complete_WithWhitespaceRemarks_ShouldKeepExistingRemarks()
         {
-            // Arrange
             var exec = new ProcessExecution(10, 20, 30);
             exec.SetRemarks("observação inicial");
 
-            // Act
             exec.Complete("     ");
 
-            // Assert
             Assert.Equal(ExecutionStatus.Concluido, exec.Status);
-            Assert.Equal("observação inicial", exec.Remarks); // mantém
+            Assert.Equal("observação inicial", exec.Remarks);
             Assert.NotNull(exec.CompletedAt);
         }
 
@@ -544,20 +481,15 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         [Fact]
         public void Cancel_ShouldSetStatusToCancelado_SetCompletedAtUtcNow_KeepOrUpdateRemarks_AndTouch()
         {
-            // Arrange
             var exec = new ProcessExecution(10, 20, 30);
             exec.SetRemarks("chamado reaberto por falha");
-            var beforeUpdatedAt = exec.UpdatedAt;
+            var beforeUpdatedAt = exec.UpdatedAt ?? DateTime.MinValue;
             var beforeUtc = DateTime.UtcNow;
 
-            System.Threading.Thread.Sleep(5);
-
-            // Act
             exec.Cancel("   cancelamento solicitado pelo cliente   ");
-
             var afterUtc = DateTime.UtcNow;
+            var afterUpdatedAt = exec.UpdatedAt ?? DateTime.MinValue;
 
-            // Assert
             Assert.Equal(ExecutionStatus.Cancelado, exec.Status);
 
             Assert.NotNull(exec.CompletedAt);
@@ -565,103 +497,78 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
                 "Cancel() deve definir CompletedAt = UtcNow.");
 
             Assert.Equal("cancelamento solicitado pelo cliente", exec.Remarks);
-
-            Assert.NotNull(exec.UpdatedAt);
-            Assert.True(exec.UpdatedAt >= beforeUpdatedAt,
-                "Cancel() deve chamar Touch().");
+            Assert.True(afterUpdatedAt > beforeUpdatedAt, "Cancel() deve chamar Touch().");
         }
 
         [Fact]
         public void Cancel_WithNullRemarks_ShouldKeepExistingRemarks()
         {
-            // Arrange
             var exec = new ProcessExecution(10, 20, 30);
             exec.SetRemarks("observação inicial");
 
-            // Act
             exec.Cancel(null);
 
-            // Assert
             Assert.Equal(ExecutionStatus.Cancelado, exec.Status);
-            Assert.Equal("observação inicial", exec.Remarks); // mantém
+            Assert.Equal("observação inicial", exec.Remarks);
             Assert.NotNull(exec.CompletedAt);
         }
 
         [Fact]
         public void Cancel_WithWhitespaceRemarks_ShouldKeepExistingRemarks()
         {
-            // Arrange
             var exec = new ProcessExecution(10, 20, 30);
             exec.SetRemarks("observação inicial");
 
-            // Act
             exec.Cancel("     ");
 
-            // Assert
             Assert.Equal(ExecutionStatus.Cancelado, exec.Status);
-            Assert.Equal("observação inicial", exec.Remarks); // mantém
+            Assert.Equal("observação inicial", exec.Remarks);
             Assert.NotNull(exec.CompletedAt);
         }
 
         // ------------------------------------------------------------------------------------------------
         // 11. MUTATION STABILITY / TOUCH()
-        //     Garantir que todos os métodos mutadores não explodam e atualizam UpdatedAt.
         // ------------------------------------------------------------------------------------------------
 
         [Fact]
-        public void AllMutationMethods_ShouldNotThrow_And_ShouldUpdateUpdatedAt()
+        public void AllMutationMethods_ShouldUpdateUpdatedAt_InOrder()
         {
             var exec = new ProcessExecution(10, 20, 30);
 
-            var ex1 = Record.Exception(() => exec.SetStep(77));
-            var after1 = exec.UpdatedAt;
+            // Garantimos progressão estrita (>) em cada chamada.
+            var t0 = exec.UpdatedAt ?? DateTime.MinValue;
 
-            var ex2 = Record.Exception(() => exec.SetUser(88));
-            var after2 = exec.UpdatedAt;
+            exec.SetStep(77);
+            var t1 = exec.UpdatedAt ?? DateTime.MinValue;
+            Assert.True(t1 > t0, "SetStep deve chamar Touch().");
 
-            var ex3 = Record.Exception(() => exec.SetStatus(ExecutionStatus.Pendente));
-            var after3 = exec.UpdatedAt;
+            exec.SetUser(88);
+            var t2 = exec.UpdatedAt ?? DateTime.MinValue;
+            Assert.True(t2 > t1, "SetUser deve chamar Touch().");
 
-            var ex4 = Record.Exception(() => exec.SetRemarks("teste touch"));
-            var after4 = exec.UpdatedAt;
+            exec.SetStatus(ExecutionStatus.Pendente);
+            var t3 = exec.UpdatedAt ?? DateTime.MinValue;
+            Assert.True(t3 > t2, "SetStatus deve chamar Touch().");
 
-            var ex5 = Record.Exception(() => exec.SetTimes(DateTime.UtcNow, DateTime.UtcNow));
-            var after5 = exec.UpdatedAt;
+            exec.SetRemarks("teste touch");
+            var t4 = exec.UpdatedAt ?? DateTime.MinValue;
+            Assert.True(t4 > t3, "SetRemarks deve chamar Touch().");
 
-            var ex6 = Record.Exception(() => exec.Start(userId: 123));
-            var after6 = exec.UpdatedAt;
+            exec.SetTimes(DateTime.UtcNow, DateTime.UtcNow);
+            var t5 = exec.UpdatedAt ?? DateTime.MinValue;
+            Assert.True(t5 > t4, "SetTimes deve chamar Touch().");
 
-            var ex7 = Record.Exception(() => exec.Complete("done"));
-            var after7 = exec.UpdatedAt;
+            exec.Start(userId: 123);
+            var t6 = exec.UpdatedAt ?? DateTime.MinValue;
+            Assert.True(t6 > t5, "Start deve chamar Touch().");
 
-            var ex8 = Record.Exception(() => exec.Cancel("cancel"));
-            var after8 = exec.UpdatedAt;
+            exec.Complete("done");
+            var t7 = exec.UpdatedAt ?? DateTime.MinValue;
+            Assert.True(t7 > t6, "Complete deve chamar Touch().");
 
-            Assert.Null(ex1);
-            Assert.Null(ex2);
-            Assert.Null(ex3);
-            Assert.Null(ex4);
-            Assert.Null(ex5);
-            Assert.Null(ex6);
-            Assert.Null(ex7);
-            Assert.Null(ex8);
-
-            Assert.NotNull(after1);
-            Assert.NotNull(after2);
-            Assert.NotNull(after3);
-            Assert.NotNull(after4);
-            Assert.NotNull(after5);
-            Assert.NotNull(after6);
-            Assert.NotNull(after7);
-            Assert.NotNull(after8);
-
-            Assert.True(after2 >= after1);
-            Assert.True(after3 >= after2);
-            Assert.True(after4 >= after3);
-            Assert.True(after5 >= after4);
-            Assert.True(after6 >= after5);
-            Assert.True(after7 >= after6);
-            Assert.True(after8 >= after7);
+            exec.Cancel("cancel");
+            var t8 = exec.UpdatedAt ?? DateTime.MinValue;
+            Assert.True(t8 > t7, "Cancel deve chamar Touch().");
         }
     }
 }

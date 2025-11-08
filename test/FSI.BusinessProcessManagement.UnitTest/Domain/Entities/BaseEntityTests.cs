@@ -121,12 +121,12 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         public void Constructor_ShouldInitialize_CreatedAt_With_Now_And_Leave_UpdatedAt_Null()
         {
             // Arrange
-            var before = DateTime.Now;
+            var before = DateTime.UtcNow;
 
             // Act
             var entity = new TestEntity();
 
-            var after = DateTime.Now;
+            var after = DateTime.UtcNow;
 
             // Assert
             Assert.True(entity.CreatedAt >= before && entity.CreatedAt <= after,

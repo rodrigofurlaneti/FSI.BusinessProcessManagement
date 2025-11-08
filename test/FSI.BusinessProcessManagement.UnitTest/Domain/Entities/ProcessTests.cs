@@ -10,9 +10,26 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
 {
     public class ProcessTests
     {
-        // -----------------------------------------------------------------------------------------
-        // 1. CONTRATO / ESTRUTURA
-        // -----------------------------------------------------------------------------------------
+        // ------------------------------------------------------------
+        // Helpers
+        // ------------------------------------------------------------
+        private static void SetEntityId(object entity, long id)
+        {
+            var prop = entity.GetType().GetProperty("Id",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.NotNull(prop);
+
+            var setter = prop!.GetSetMethod(nonPublic: true);
+            Assert.NotNull(setter);
+
+            setter!.Invoke(entity, new object?[] { id });
+        }
+
+        private static DateTime MinWhenNull(DateTime? dt) => dt ?? DateTime.MinValue;
+
+        // ------------------------------------------------------------
+        // 1) CONTRATO / ESTRUTURA
+        // ------------------------------------------------------------
 
         [Fact]
         public void Process_Class_Must_Be_Sealed_And_Inherit_BaseEntity()
@@ -20,10 +37,7 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
             var t = typeof(Process);
 
             Assert.NotNull(t);
-
-            Assert.True(t.IsSealed,
-                "Process deve continuar sendo sealed. Se mudar, atualize este teste.");
-
+            Assert.True(t.IsSealed, "Process deve continuar sealed.");
             Assert.Equal(typeof(BaseEntity), t.BaseType);
         }
 
@@ -36,64 +50,58 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
             var nameProp = t.GetProperty("Name", BindingFlags.Public | BindingFlags.Instance);
             Assert.NotNull(nameProp);
             Assert.Equal(typeof(string), nameProp!.PropertyType);
-            Assert.NotNull(nameProp.GetGetMethod());
+            Assert.True(nameProp.GetGetMethod()!.IsPublic);
             Assert.Null(nameProp.GetSetMethod());
-            var nameSetMethod = nameProp.GetSetMethod(true);
-            Assert.NotNull(nameSetMethod);
-            Assert.True(nameSetMethod!.IsPrivate,
-                "Name deve continuar com private set;");
+            Assert.True(nameProp.GetSetMethod(true)!.IsPrivate);
 
             // DepartmentId
             var deptIdProp = t.GetProperty("DepartmentId", BindingFlags.Public | BindingFlags.Instance);
             Assert.NotNull(deptIdProp);
             Assert.Equal(typeof(long?), deptIdProp!.PropertyType);
-            Assert.NotNull(deptIdProp.GetGetMethod());
+            Assert.True(deptIdProp.GetGetMethod()!.IsPublic);
             Assert.Null(deptIdProp.GetSetMethod());
-            var deptSetMethod = deptIdProp.GetSetMethod(true);
-            Assert.NotNull(deptSetMethod);
-            Assert.True(deptSetMethod!.IsPrivate,
-                "DepartmentId deve continuar com private set;");
+            Assert.True(deptIdProp.GetSetMethod(true)!.IsPrivate);
 
             // Description
             var descProp = t.GetProperty("Description", BindingFlags.Public | BindingFlags.Instance);
             Assert.NotNull(descProp);
-            Assert.Equal(typeof(string), descProp!.PropertyType); // string? = System.String em runtime
-            Assert.NotNull(descProp.GetGetMethod());
+            Assert.Equal(typeof(string), descProp!.PropertyType); // string? -> System.String
+            Assert.True(descProp.GetGetMethod()!.IsPublic);
             Assert.Null(descProp.GetSetMethod());
-            var descSetMethod = descProp.GetSetMethod(true);
-            Assert.NotNull(descSetMethod);
-            Assert.True(descSetMethod!.IsPrivate,
-                "Description deve continuar com private set;");
+            Assert.True(descProp.GetSetMethod(true)!.IsPrivate);
 
             // CreatedBy
             var createdByProp = t.GetProperty("CreatedBy", BindingFlags.Public | BindingFlags.Instance);
             Assert.NotNull(createdByProp);
             Assert.Equal(typeof(long?), createdByProp!.PropertyType);
-            Assert.NotNull(createdByProp.GetGetMethod());
+            Assert.True(createdByProp.GetGetMethod()!.IsPublic);
             Assert.Null(createdByProp.GetSetMethod());
-            var createdBySetMethod = createdByProp.GetSetMethod(true);
-            Assert.NotNull(createdBySetMethod);
-            Assert.True(createdBySetMethod!.IsPrivate,
-                "CreatedBy deve continuar com private set;");
+            Assert.True(createdByProp.GetSetMethod(true)!.IsPrivate);
 
-            // Steps
+            // Steps (IReadOnlyList)
             var stepsProp = t.GetProperty("Steps", BindingFlags.Public | BindingFlags.Instance);
             Assert.NotNull(stepsProp);
-            Assert.True(typeof(IReadOnlyCollection<ProcessStep>).IsAssignableFrom(stepsProp!.PropertyType),
-                "Steps deve continuar sendo IReadOnlyCollection<ProcessStep> (somente leitura).");
-            Assert.NotNull(stepsProp.GetGetMethod());
-            // Steps só tem get (sem set público e nem privado)
-            Assert.Null(stepsProp.GetSetMethod(true));
+            Assert.True(typeof(IReadOnlyList<ProcessStep>).IsAssignableFrom(stepsProp!.PropertyType));
+            Assert.True(stepsProp.GetGetMethod()!.IsPublic);
+            Assert.Null(stepsProp.GetSetMethod(true)); // sem set (nem privado)
         }
 
         [Fact]
-        public void Process_Must_Contain_PrivateField__steps_AsListOfProcessStep()
+        public void Process_Should_Expose_ReadOnly_Steps_View_And_Cache_It()
         {
-            var t = typeof(Process);
+            var process = new Process("Proc F");
 
-            var stepsField = t.GetField("_steps", BindingFlags.NonPublic | BindingFlags.Instance);
-            Assert.NotNull(stepsField);
-            Assert.Equal(typeof(List<ProcessStep>), stepsField!.FieldType);
+            Assert.NotNull(process.Steps);
+            Assert.Empty(process.Steps);
+
+            // Não deve ser List<T> exposta
+            Assert.False(process.Steps is List<ProcessStep>,
+                "Steps não deve ser List pública; deve ser IReadOnlyList.");
+
+            // Como _stepsView é cacheado, múltiplas leituras devem referenciar o mesmo objeto
+            var v1 = process.Steps;
+            var v2 = process.Steps;
+            Assert.True(object.ReferenceEquals(v1, v2), "Steps deve retornar a mesma view cacheada.");
         }
 
         [Fact]
@@ -101,26 +109,25 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         {
             var t = typeof(Process);
 
-            // ctor privado sem parâmetros
+            // private ctor (EF)
             var privateCtor = t
                 .GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance)
                 .FirstOrDefault(c => c.GetParameters().Length == 0);
 
             Assert.NotNull(privateCtor);
-            Assert.True(privateCtor!.IsPrivate,
-                "O construtor sem parâmetro deve continuar private (requisito EF).");
+            Assert.True(privateCtor!.IsPrivate, "Ctor sem parâmetros deve ser private (EF).");
 
-            // ctor público esperado (string name, long? departmentId = null, string? description = null, long? createdBy = null)
+            // public ctor esperado: (string name, long? departmentId = null, string? description = null, long? createdBy = null)
             var publicCtor = t
                 .GetConstructors(BindingFlags.Public | BindingFlags.Instance)
                 .FirstOrDefault(c =>
                 {
                     var p = c.GetParameters();
                     return p.Length == 4
-                        && p[0].ParameterType == typeof(string)
-                        && p[1].ParameterType == typeof(long?)
-                        && p[2].ParameterType == typeof(string)
-                        && p[3].ParameterType == typeof(long?);
+                           && p[0].ParameterType == typeof(string)
+                           && p[1].ParameterType == typeof(long?)
+                           && p[2].ParameterType == typeof(string)
+                           && p[3].ParameterType == typeof(long?);
                 });
 
             Assert.NotNull(publicCtor);
@@ -131,65 +138,39 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         {
             var t = typeof(Process);
 
-            // SetName(string name)
-            var setName = t.GetMethod("SetName", BindingFlags.Public | BindingFlags.Instance);
-            Assert.NotNull(setName);
-            Assert.Single(setName!.GetParameters());
-            Assert.Equal(typeof(string), setName.GetParameters()[0].ParameterType);
+            Assert.Equal(typeof(string), t.GetMethod("SetName")!.GetParameters()[0].ParameterType);
+            Assert.Equal(typeof(long?), t.GetMethod("SetDepartment")!.GetParameters()[0].ParameterType);
+            Assert.Equal(typeof(string), t.GetMethod("SetDescription")!.GetParameters()[0].ParameterType);
+            Assert.Equal(typeof(long?), t.GetMethod("SetCreatedBy")!.GetParameters()[0].ParameterType);
 
-            // SetDepartment(long? departmentId)
-            var setDepartment = t.GetMethod("SetDepartment", BindingFlags.Public | BindingFlags.Instance);
-            Assert.NotNull(setDepartment);
-            Assert.Single(setDepartment!.GetParameters());
-            Assert.Equal(typeof(long?), setDepartment.GetParameters()[0].ParameterType);
-
-            // SetDescription(string? description)
-            var setDescription = t.GetMethod("SetDescription", BindingFlags.Public | BindingFlags.Instance);
-            Assert.NotNull(setDescription);
-            Assert.Single(setDescription!.GetParameters());
-            Assert.Equal(typeof(string), setDescription.GetParameters()[0].ParameterType);
-
-            // SetCreatedBy(long? createdBy)
-            var setCreatedBy = t.GetMethod("SetCreatedBy", BindingFlags.Public | BindingFlags.Instance);
-            Assert.NotNull(setCreatedBy);
-            Assert.Single(setCreatedBy!.GetParameters());
-            Assert.Equal(typeof(long?), setCreatedBy.GetParameters()[0].ParameterType);
-
-            // AddStep(string stepName, int stepOrder, long? assignedRoleId = null)
-            var addStep = t.GetMethod("AddStep", BindingFlags.Public | BindingFlags.Instance);
+            var addStep = t.GetMethod("AddStep");
             Assert.NotNull(addStep);
-            var addParams = addStep!.GetParameters();
-            Assert.Equal(3, addParams.Length);
-            Assert.Equal(typeof(string), addParams[0].ParameterType);
-            Assert.Equal(typeof(int), addParams[1].ParameterType);
-            Assert.Equal(typeof(long?), addParams[2].ParameterType);
+            var pAdd = addStep!.GetParameters();
+            Assert.Equal(3, pAdd.Length);
+            Assert.Equal(typeof(string), pAdd[0].ParameterType);
+            Assert.Equal(typeof(int), pAdd[1].ParameterType);
+            Assert.Equal(typeof(long?), pAdd[2].ParameterType);
 
-            // RemoveStep(long stepId)
-            var removeStep = t.GetMethod("RemoveStep", BindingFlags.Public | BindingFlags.Instance);
+            var removeStep = t.GetMethod("RemoveStep");
             Assert.NotNull(removeStep);
-            Assert.Single(removeStep!.GetParameters());
-            Assert.Equal(typeof(long), removeStep.GetParameters()[0].ParameterType);
+            Assert.Equal(typeof(long), removeStep!.GetParameters()[0].ParameterType);
 
-            // StartExecution(long stepId, long? userId = null)
-            var startExecution = t.GetMethod("StartExecution", BindingFlags.Public | BindingFlags.Instance);
+            var startExecution = t.GetMethod("StartExecution");
             Assert.NotNull(startExecution);
-            var execParams = startExecution!.GetParameters();
-            Assert.Equal(2, execParams.Length);
-            Assert.Equal(typeof(long), execParams[0].ParameterType);
-            Assert.Equal(typeof(long?), execParams[1].ParameterType);
+            var pExec = startExecution!.GetParameters();
+            Assert.Equal(typeof(long), pExec[0].ParameterType);
+            Assert.Equal(typeof(long?), pExec[1].ParameterType);
         }
 
-        // -----------------------------------------------------------------------------------------
-        // 2. CONSTRUTOR / ESTADO INICIAL
-        // -----------------------------------------------------------------------------------------
+        // ------------------------------------------------------------
+        // 2) CONSTRUTOR / ESTADO INICIAL
+        // ------------------------------------------------------------
 
         [Fact]
         public void Constructor_ShouldInitialize_WithName_AndOptionalFields()
         {
-            // Arrange
             var beforeUtc = DateTime.UtcNow;
 
-            // Act
             var process = new Process(
                 name: "   Processamento de Carga   ",
                 departmentId: 10,
@@ -199,20 +180,17 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
 
             var afterUtc = DateTime.UtcNow;
 
-            // Assert
             Assert.Equal("Processamento de Carga", process.Name);
             Assert.Equal(10, process.DepartmentId);
             Assert.Equal("fluxo de importação", process.Description);
             Assert.Equal(777, process.CreatedBy);
 
-            // SetName() é chamado no construtor e ele faz Touch(),
-            // então UpdatedAt já deve ter sido preenchido.
-            Assert.NotNull(process.UpdatedAt);
-            Assert.InRange(process.UpdatedAt!.Value, beforeUtc, afterUtc);
-
-            // Steps deve começar vazio
             Assert.NotNull(process.Steps);
             Assert.Empty(process.Steps);
+
+            // SetName() chama Touch(), então UpdatedAt deve estar na janela
+            Assert.NotNull(process.UpdatedAt);
+            Assert.True(process.UpdatedAt!.Value >= beforeUtc && process.UpdatedAt!.Value <= afterUtc);
         }
 
         [Fact]
@@ -234,43 +212,33 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         [InlineData("   ")]
         public void Constructor_InvalidName_ShouldThrowDomainException(string invalidName)
         {
-            var ex = Assert.Throws<DomainException>(() =>
-                new Process(invalidName)
-            );
-
+            var ex = Assert.Throws<DomainException>(() => new Process(invalidName));
             Assert.Equal("Process name is required.", ex.Message);
         }
 
         [Fact]
         public void Constructor_NameTooLong_ShouldThrowDomainException()
         {
-            string longName = new string('X', 201); // >200
-
-            var ex = Assert.Throws<DomainException>(() =>
-                new Process(longName)
-            );
-
+            string longName = new string('X', 201);
+            var ex = Assert.Throws<DomainException>(() => new Process(longName));
             Assert.Equal("Process name too long (max 200).", ex.Message);
         }
 
-        // -----------------------------------------------------------------------------------------
-        // 3. SetName
-        // -----------------------------------------------------------------------------------------
+        // ------------------------------------------------------------
+        // 3) SetName
+        // ------------------------------------------------------------
 
         [Fact]
         public void SetName_WithValidName_ShouldTrim_And_UpdateUpdatedAt()
         {
             var process = new Process("Inicial");
-
-            var before = process.UpdatedAt;
-            System.Threading.Thread.Sleep(5);
+            var before = MinWhenNull(process.UpdatedAt);
 
             process.SetName("   Novo Nome   ");
+            var after = MinWhenNull(process.UpdatedAt);
 
             Assert.Equal("Novo Nome", process.Name);
-            Assert.NotNull(process.UpdatedAt);
-            Assert.True(process.UpdatedAt >= before,
-                "SetName deve chamar Touch(), logo UpdatedAt deve avançar.");
+            Assert.True(after > before, "SetName deve chamar Touch() e avançar UpdatedAt.");
         }
 
         [Theory]
@@ -280,11 +248,7 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         public void SetName_WithInvalidName_ShouldThrowDomainException(string invalid)
         {
             var process = new Process("Valido");
-
-            var ex = Assert.Throws<DomainException>(() =>
-                process.SetName(invalid)
-            );
-
+            var ex = Assert.Throws<DomainException>(() => process.SetName(invalid));
             Assert.Equal("Process name is required.", ex.Message);
         }
 
@@ -292,71 +256,52 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         public void SetName_WithTooLongName_ShouldThrowDomainException()
         {
             var process = new Process("Valido");
-
             string longName = new string('A', 201);
-
-            var ex = Assert.Throws<DomainException>(() =>
-                process.SetName(longName)
-            );
-
+            var ex = Assert.Throws<DomainException>(() => process.SetName(longName));
             Assert.Equal("Process name too long (max 200).", ex.Message);
         }
 
-        [Fact]
-        public void SetName_ShouldNotThrow_OnHappyPath()
-        {
-            var process = new Process("abc");
-            var ex = Record.Exception(() => process.SetName("def"));
-            Assert.Null(ex);
-        }
-
-        // -----------------------------------------------------------------------------------------
-        // 4. SetDepartment / SetDescription / SetCreatedBy
-        // -----------------------------------------------------------------------------------------
+        // ------------------------------------------------------------
+        // 4) SetDepartment / SetDescription / SetCreatedBy
+        // ------------------------------------------------------------
 
         [Fact]
         public void SetDepartment_ShouldAssignValue_AndTouch()
         {
             var process = new Process("Proc A");
-
-            var before = process.UpdatedAt;
-            System.Threading.Thread.Sleep(5);
+            var before = MinWhenNull(process.UpdatedAt);
 
             process.SetDepartment(99);
+            var after = MinWhenNull(process.UpdatedAt);
 
             Assert.Equal(99, process.DepartmentId);
-            Assert.NotNull(process.UpdatedAt);
-            Assert.True(process.UpdatedAt >= before);
+            Assert.True(after > before);
         }
 
         [Fact]
         public void SetDepartment_ShouldAllowNull_AndTouch()
         {
             var process = new Process("Proc A", departmentId: 1);
-
-            var before = process.UpdatedAt;
-            System.Threading.Thread.Sleep(5);
+            var before = MinWhenNull(process.UpdatedAt);
 
             process.SetDepartment(null);
+            var after = MinWhenNull(process.UpdatedAt);
 
             Assert.Null(process.DepartmentId);
-            Assert.NotNull(process.UpdatedAt);
-            Assert.True(process.UpdatedAt >= before);
+            Assert.True(after > before);
         }
 
         [Fact]
         public void SetDescription_ShouldTrimAndSetValue_AndTouch()
         {
             var process = new Process("Proc B");
-
-            var before = process.UpdatedAt;
-            System.Threading.Thread.Sleep(5);
+            var before = MinWhenNull(process.UpdatedAt);
 
             process.SetDescription("   algo importante   ");
+            var after = MinWhenNull(process.UpdatedAt);
 
             Assert.Equal("algo importante", process.Description);
-            Assert.NotNull(process.UpdatedAt);
-            Assert.True(process.UpdatedAt >= before);
+            Assert.True(after > before);
         }
 
         [Theory]
@@ -366,70 +311,66 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         public void SetDescription_ShouldSetNull_WhenBlank_AndTouch(string? invalidDesc)
         {
             var process = new Process("Proc C", description: "preenchido");
-
-            var before = process.UpdatedAt;
-            System.Threading.Thread.Sleep(5);
+            var before = MinWhenNull(process.UpdatedAt);
 
             process.SetDescription(invalidDesc);
+            var after = MinWhenNull(process.UpdatedAt);
 
             Assert.Null(process.Description);
-            Assert.NotNull(process.UpdatedAt);
-            Assert.True(process.UpdatedAt >= before);
+            Assert.True(after > before);
         }
 
         [Fact]
         public void SetCreatedBy_ShouldAssignValue_AndTouch()
         {
             var process = new Process("Proc D");
-
-            var before = process.UpdatedAt;
-            System.Threading.Thread.Sleep(5);
+            var before = MinWhenNull(process.UpdatedAt);
 
             process.SetCreatedBy(1234);
+            var after = MinWhenNull(process.UpdatedAt);
 
             Assert.Equal(1234, process.CreatedBy);
-            Assert.NotNull(process.UpdatedAt);
-            Assert.True(process.UpdatedAt >= before);
+            Assert.True(after > before);
         }
 
         [Fact]
         public void SetCreatedBy_ShouldAllowNull_AndTouch()
         {
             var process = new Process("Proc E", createdBy: 42);
-
-            var before = process.UpdatedAt;
-            System.Threading.Thread.Sleep(5);
+            var before = MinWhenNull(process.UpdatedAt);
 
             process.SetCreatedBy(null);
+            var after = MinWhenNull(process.UpdatedAt);
 
             Assert.Null(process.CreatedBy);
-            Assert.NotNull(process.UpdatedAt);
-            Assert.True(process.UpdatedAt >= before);
+            Assert.True(after > before);
         }
 
-        // -----------------------------------------------------------------------------------------
-        // 5. Steps / AddStep / RemoveStep
-        // -----------------------------------------------------------------------------------------
+        // ------------------------------------------------------------
+        // 5) Steps / AddStep / RemoveStep
+        // ------------------------------------------------------------
 
         [Fact]
-        public void Steps_MustStartEmpty_AndNotBeExternallyMutable()
+        public void Steps_MustStartEmpty_AndNotBeExternallyMutable_AndBeCachedView()
         {
             var process = new Process("Proc F");
 
             Assert.Empty(process.Steps);
+            Assert.False(process.Steps is List<ProcessStep>);
 
-            // tentar cast e add direto deve falhar conceitualmente (IReadOnlyCollection não tem Add)
-            Assert.False(process.Steps is List<ProcessStep>,
-                "Steps NÃO deve ser List pública, deve ser IReadOnlyCollection.");
+            // cache da view
+            var v1 = process.Steps;
+            var v2 = process.Steps;
+            Assert.True(object.ReferenceEquals(v1, v2));
         }
 
         [Fact]
         public void AddStep_ShouldCreateNewProcessStep_AppendToList_AndTouch()
         {
             var process = new Process("Proc G");
+            SetEntityId(process, 1); // necessário para ctor de ProcessStep (processId > 0)
 
-            var before = process.UpdatedAt;
-            System.Threading.Thread.Sleep(5);
+            var before = MinWhenNull(process.UpdatedAt);
 
             var step = process.AddStep(
                 stepName: "  Validação Documental ",
@@ -437,37 +378,28 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
                 assignedRoleId: 999
             );
 
-            // Assert entidade retornada
-            Assert.NotNull(step);
-            // A classe ProcessStep deve ter sido criada usando this.Id e Trim no nome.
-            // Validamos os campos que sabemos que existem na assinatura AddStep.
-            Assert.Equal(1, step.StepOrder);
-            Assert.Equal("Validação Documental", step.StepName ?? step.StepName ?? step.ToString());
-            // ↑ Observação:
-            // Eu não vi a implementação de ProcessStep, então aqui vou explicar:
-            // - Se sua classe ProcessStep tem propriedade pública StepName, mantenha o Assert.Equal nessa propriedade.
-            // - Se o nome da propriedade é Name (ou Title), ajuste aqui.
-            // - Se não existe nenhuma propriedade pública que carregue o nome, remova essa asserção e mantenha só StepOrder.
+            var after = MinWhenNull(process.UpdatedAt);
 
-            // Deve ter incrementado a lista interna
+            Assert.NotNull(step);
+            Assert.Equal("Validação Documental", step.StepName);
+            Assert.Equal(1, step.StepOrder);
+            Assert.Equal(999, step.AssignedRoleId);
+
             Assert.Single(process.Steps);
             Assert.Contains(step, process.Steps);
 
-            // Deve ter atualizado UpdatedAt via Touch()
-            Assert.NotNull(process.UpdatedAt);
-            Assert.True(process.UpdatedAt >= before);
+            Assert.True(after > before);
         }
 
         [Fact]
         public void AddStep_WithDuplicateOrder_ShouldThrowDomainException_AndNotAdd()
         {
             var process = new Process("Proc H");
+            SetEntityId(process, 1);
+
             process.AddStep("Primeira", 1);
 
-            var ex = Assert.Throws<DomainException>(() =>
-                process.AddStep("Outra mesma ordem", 1)
-            );
-
+            var ex = Assert.Throws<DomainException>(() => process.AddStep("Outra mesma ordem", 1));
             Assert.Equal("A step with order 1 already exists.", ex.Message);
 
             Assert.Single(process.Steps);
@@ -480,91 +412,78 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         public void AddStep_WithInvalidName_ShouldThrowDomainException(string invalidStepName)
         {
             var process = new Process("Proc I");
+            SetEntityId(process, 1);
 
-            var ex = Assert.Throws<DomainException>(() =>
-                process.AddStep(invalidStepName, stepOrder: 1)
-            );
-
+            var ex = Assert.Throws<DomainException>(() => process.AddStep(invalidStepName, stepOrder: 1));
             Assert.Equal("StepName is required.", ex.Message);
         }
 
         [Fact]
-        public void RemoveStep_ShouldRemoveByIdOrStepId_AndTouch()
+        public void RemoveStep_ShouldRemoveById_AndTouch()
         {
             var process = new Process("Proc J");
+            SetEntityId(process, 1);
 
-            // adiciona 2 steps
             var s1 = process.AddStep("A", 1);
             var s2 = process.AddStep("B", 2);
 
-            // tentativa de remoção:
-            // A regra atual diz: procura x.Id == stepId || x.StepId == stepId
-            // Então vamos tentar remover usando o próprio Id do segundo step.
-            // Eu não sei se ProcessStep expõe public long Id ou StepId public,
-            // então vou tentar ambos de forma defensiva:
-            long candidateId =
-                (long?)GetPropertyValue<long?>(s2, "Id") ??
-                (long?)GetPropertyValue<long?>(s2, "StepId")
-                ?? throw new Exception("ProcessStep precisa ter Id ou StepId público long para remoção.");
+            // Definimos o Id do s2 para permitir remoção por Id
+            SetEntityId(s2, 22);
 
-            var before = process.UpdatedAt;
-            System.Threading.Thread.Sleep(5);
+            var before = MinWhenNull(process.UpdatedAt);
 
-            process.RemoveStep(candidateId);
+            process.RemoveStep(22);
 
-            Assert.Single(process.Steps); // sobrou só 1
+            var after = MinWhenNull(process.UpdatedAt);
+
+            Assert.Single(process.Steps);
             Assert.Contains(s1, process.Steps);
             Assert.DoesNotContain(s2, process.Steps);
-
-            Assert.NotNull(process.UpdatedAt);
-            Assert.True(process.UpdatedAt >= before);
+            Assert.True(after > before);
         }
 
         [Fact]
         public void RemoveStep_InvalidId_ShouldThrowDomainException()
         {
             var process = new Process("Proc K");
-            process.AddStep("A", 1);
+            SetEntityId(process, 1);
 
-            var ex = Assert.Throws<DomainException>(() =>
-                process.RemoveStep(stepId: 999999) // não existe
-            );
+            var s1 = process.AddStep("A", 1);
+            SetEntityId(s1, 11);
 
+            var ex = Assert.Throws<DomainException>(() => process.RemoveStep(stepId: 999999));
             Assert.Equal("Step not found.", ex.Message);
 
             Assert.Single(process.Steps);
         }
 
-        // -----------------------------------------------------------------------------------------
-        // 6. StartExecution
-        // -----------------------------------------------------------------------------------------
+        // ------------------------------------------------------------
+        // 6) StartExecution
+        // ------------------------------------------------------------
 
         [Fact]
         public void StartExecution_WithValidStepId_ShouldReturnProcessExecution_AndTouch()
         {
             var process = new Process("Proc L");
+            SetEntityId(process, 1);
+
             var step = process.AddStep("Check docs", 1);
+            SetEntityId(step, 101); // garantir correspondência para validação de pertença
 
-            // precisamos de um stepId válido (>0).
-            // Aqui vale a mesma restrição: ProcessExecution espera stepId
-            // Logo pegamos um Id conhecido da etapa adicionada:
-            long candidateStepId =
-                (long?)GetPropertyValue<long?>(step, "Id") ??
-                (long?)GetPropertyValue<long?>(step, "StepId")
-                ?? 1; // fallback safe: 1 já é válido pois AddStep usou stepOrder 1
+            var before = MinWhenNull(process.UpdatedAt);
 
-            var before = process.UpdatedAt;
-            System.Threading.Thread.Sleep(5);
+            var exec = process.StartExecution(stepId: 101, userId: 444);
 
-            var exec = process.StartExecution(candidateStepId, userId: 444);
+            var after = MinWhenNull(process.UpdatedAt);
 
             Assert.NotNull(exec);
-            // Validação defensiva: garantir que exec seja realmente ProcessExecution
             Assert.IsType<ProcessExecution>(exec);
 
-            // UpdatedAt atualizada por Touch()
-            Assert.NotNull(process.UpdatedAt);
-            Assert.True(process.UpdatedAt >= before);
+            Assert.Equal(1, exec.ProcessId);
+            Assert.Equal(101, exec.StepId);
+            Assert.Equal(444, exec.UserId);
+
+            Assert.True(after > before);
         }
 
         [Theory]
@@ -574,28 +493,21 @@ namespace FSI.BusinessProcessManagement.UnitTests.Domain.Entities
         public void StartExecution_WithInvalidStepId_ShouldThrowDomainException(long invalidStep)
         {
             var process = new Process("Proc M");
+            SetEntityId(process, 1);
 
-            var ex = Assert.Throws<DomainException>(() =>
-                process.StartExecution(invalidStep, userId: 123)
-            );
-
+            var ex = Assert.Throws<DomainException>(() => process.StartExecution(invalidStep, userId: 123));
             Assert.Equal("StepId is invalid.", ex.Message);
         }
 
-        // -----------------------------------------------------------------------------------------
-        // 7. Helper interno para pegar propriedades opcionais de ProcessStep em runtime
-        // -----------------------------------------------------------------------------------------
-        private static T? GetPropertyValue<T>(object obj, string propName)
+        [Fact]
+        public void StartExecution_WhenStepDoesNotBelongToProcess_ShouldThrowDomainException()
         {
-            var prop = obj.GetType().GetProperty(propName,
-                BindingFlags.Public | BindingFlags.Instance);
+            var process = new Process("Proc N");
+            SetEntityId(process, 1);
 
-            if (prop == null) return default;
-
-            var value = prop.GetValue(obj);
-            if (value == null) return default;
-
-            return (T)value;
+            // StepId inexistente na coleção do processo
+            var ex = Assert.Throws<DomainException>(() => process.StartExecution(stepId: 777, userId: 99));
+            Assert.Equal("Step does not belong to this process.", ex.Message);
         }
     }
 }
