@@ -11,13 +11,10 @@ namespace FSI.BusinessProcessManagement.Infrastructure.Persistence.Configuration
             b.ToTable("Department");
             b.HasKey(x => x.Id);
             b.Property(x => x.Id).HasColumnName("DepartmentId");
-
             b.Property(x => x.Name).HasColumnName("DepartmentName").HasMaxLength(150).IsRequired();
             b.Property(x => x.Description).HasColumnName("Description");
-
             b.Property(x => x.CreatedAt).HasColumnType("datetime(6)");
             b.Property(x => x.UpdatedAt).HasColumnType("datetime(6)");
-
             b.HasIndex(x => x.Name).IsUnique().HasDatabaseName("UQ_Department_Name");
         }
     }
