@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\BusinessProcessManagement\FSI.BusinessProcessManagement.Application\FSI.BusinessProcessManagement.Application.csproj" />
     <ProjectReference Include="..\..\src\BusinessProcessManagement\FSI.BusinessProcessManagement.Domain\FSI.BusinessProcessManagement.Domain.csproj" />
   </ItemGroup>
 

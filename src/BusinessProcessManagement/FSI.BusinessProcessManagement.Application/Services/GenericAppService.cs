@@ -6,7 +6,8 @@ using FSI.BusinessProcessManagement.Domain.Interfaces;
 
 namespace FSI.BusinessProcessManagement.Application.Services
 {
-    public abstract class GenericAppService<TDto, TEntity> : IAppService<TDto>
+    public abstract class GenericAppService<TDto, TEntity> : IGenericAppService<TDto>
+        where TDto : class
         where TEntity : class
     {
         protected readonly IUnitOfWork Uow;
@@ -19,7 +20,7 @@ namespace FSI.BusinessProcessManagement.Application.Services
         }
 
         protected abstract TDto MapToDto(TEntity entity);
-        protected abstract TEntity MapToEntity(TDto dto); // usado apenas para INSERT padrão
+        protected abstract TEntity MapToEntity(TDto dto);
 
         public virtual async Task<IEnumerable<TDto>> GetAllAsync()
         {
@@ -38,7 +39,6 @@ namespace FSI.BusinessProcessManagement.Application.Services
             var entity = MapToEntity(dto);
             await Repository.InsertAsync(entity);
             await Uow.CommitAsync();
-
             var idProp = entity.GetType().GetProperty("Id");
             return idProp?.GetValue(entity) is long id ? id : 0L;
         }

@@ -1,8 +1,5 @@
 ﻿namespace FSI.BusinessProcessManagement.Application.Interfaces
 {
-    /// <summary>
-    /// Contrato genérico para AppServices que implementam CRUD básico.
-    /// </summary>
     public interface IGenericAppService<TDto>
         where TDto : class
     {
