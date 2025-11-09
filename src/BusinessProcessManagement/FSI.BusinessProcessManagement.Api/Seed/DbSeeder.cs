@@ -12,9 +12,22 @@ namespace FSI.BusinessProcessManagement.Api.Seed
     {
         public static async Task SeedAdminAsync(BpmDbContext db)
         {
-            await db.Database.MigrateAsync();
+            // ✅ Usa GetMigrations() (síncrono) para compatibilidade de versões do EF Core
+            var hasMigrations = db.Database.GetMigrations().Any();
+            if (hasMigrations)
+            {
+                await db.Database.MigrateAsync();
+            }
+            else
+            {
+                await db.Database.EnsureCreatedAsync();
+            }
 
-            var adminRole = await db.Set<Role>().AsNoTracking().FirstOrDefaultAsync(r => r.Name == "Administrador");
+            // 🔹 Cria o papel "Administrador" se não existir
+            var adminRole = await db.Set<Role>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Name == "Administrador");
+
             if (adminRole == null)
             {
                 adminRole = new Role("Administrador", "Acesso total ao sistema");
@@ -22,7 +35,10 @@ namespace FSI.BusinessProcessManagement.Api.Seed
                 await db.SaveChangesAsync();
             }
 
-            var adminUser = await db.Set<User>().FirstOrDefaultAsync(u => u.Username == "admin");
+            // 🔹 Cria o usuário admin se não existir
+            var adminUser = await db.Set<User>()
+                .FirstOrDefaultAsync(u => u.Username == "admin");
+
             if (adminUser == null)
             {
                 var password = "Admin@123";
@@ -33,12 +49,14 @@ namespace FSI.BusinessProcessManagement.Api.Seed
                     passwordHash: hash,
                     departmentId: null,
                     email: "admin@local",
-                    isActive: true);
+                    isActive: true
+                );
 
                 await db.Set<User>().AddAsync(adminUser);
                 await db.SaveChangesAsync();
             }
 
+            // 🔹 Vincula o usuário ao papel "Administrador" caso ainda não esteja vinculado
             var hasLink = await db.Set<UserRole>()
                 .AnyAsync(ur => ur.UserId == adminUser.Id && ur.RoleId == adminRole.Id);
 
@@ -52,12 +70,17 @@ namespace FSI.BusinessProcessManagement.Api.Seed
             if (db.Model.FindEntityType(typeof(RoleScreenPermission)) != null)
             {
                 var screens = await db.Set<Screen>().ToListAsync();
+
                 if (!screens.Any())
                 {
-                    screens.Add(new Screen("Dashboard", "Visão geral"));
-                    screens.Add(new Screen("Users", "Gestão de usuários"));
-                    screens.Add(new Screen("Processes", "Gestão de processos"));
-                    screens.Add(new Screen("Audit", "Log de auditoria"));
+                    screens.AddRange(new[]
+                    {
+                        new Screen("Dashboard", "Visão geral"),
+                        new Screen("Users", "Gestão de usuários"),
+                        new Screen("Processes", "Gestão de processos"),
+                        new Screen("Audit", "Log de auditoria")
+                    });
+
                     await db.Set<Screen>().AddRangeAsync(screens);
                     await db.SaveChangesAsync();
                 }
@@ -66,12 +89,22 @@ namespace FSI.BusinessProcessManagement.Api.Seed
                 {
                     var exists = await db.Set<RoleScreenPermission>()
                         .AnyAsync(p => p.RoleId == adminRole.Id && p.ScreenId == s.Id);
+
                     if (!exists)
                     {
                         await db.Set<RoleScreenPermission>().AddAsync(
-                            new RoleScreenPermission(adminRole.Id, s.Id, canView: true, canCreate: true, canEdit: true, canDelete: true));
+                            new RoleScreenPermission(
+                                adminRole.Id,
+                                s.Id,
+                                canView: true,
+                                canCreate: true,
+                                canEdit: true,
+                                canDelete: true
+                            )
+                        );
                     }
                 }
+
                 await db.SaveChangesAsync();
             }
         }
